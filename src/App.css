@@ -377,6 +377,345 @@
   margin-top: 10px;
 }
 
+/* MODAL DE PAGO */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-pago {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.modal-header h2 {
+  font-size: 1.75rem;
+  color: #1f2937;
+}
+
+.btn-cerrar {
+  background: #f3f4f6;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #6b7280;
+}
+
+.btn-cerrar:hover {
+  background: #e5e7eb;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+/* RESUMEN DEL PEDIDO */
+.resumen-pedido {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.resumen-pedido h3 {
+  font-size: 1.125rem;
+  margin-bottom: 15px;
+  color: #374151;
+}
+
+.resumen-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.resumen-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.resumen-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 15px;
+  border-top: 2px solid #374151;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* MÉTODO DE PAGO */
+.metodo-pago-section {
+  margin-bottom: 25px;
+}
+
+.metodo-pago-section h3 {
+  font-size: 1.125rem;
+  margin-bottom: 15px;
+  color: #374151;
+}
+
+.metodos-pago {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.metodo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  border: 3px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.metodo-btn:hover {
+  border-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metodo-btn.activo {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  color: #16a34a;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+}
+
+.metodo-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+/* SECCIÓN DE EFECTIVO */
+.efectivo-section {
+  background: #f0fdf4;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid #86efac;
+}
+
+.efectivo-section label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #166534;
+}
+
+.input-monto {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.5rem;
+  border: 2px solid #86efac;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 700;
+  color: #166534;
+}
+
+.input-monto:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+.cambio-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.cambio-positivo {
+  color: #16a34a;
+}
+
+.cambio-negativo {
+  color: #dc2626;
+}
+
+/* INFORMACIÓN DE TRANSFERENCIA */
+.transferencia-info {
+  background: #eff6ff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid #93c5fd;
+  text-align: center;
+}
+
+.transferencia-info p {
+  font-size: 1.125rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* FOOTER DEL MODAL */
+.modal-footer {
+  display: flex;
+  gap: 15px;
+  padding: 25px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.btn-cancelar {
+  flex: 1;
+  padding: 15px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancelar:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.btn-confirmar {
+  flex: 2;
+  padding: 15px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border: none;
+  background: #16a34a;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.btn-confirmar:hover:not(:disabled) {
+  background: #15803d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+}
+
+.btn-confirmar:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* PAGO EXITOSO */
+.pago-exitoso {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.check-animation {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 30px;
+  background: #16a34a;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  animation: checkPop 0.5s;
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pago-exitoso h2 {
+  font-size: 2rem;
+  color: #16a34a;
+  margin-bottom: 15px;
+}
+
+.numero-orden {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+.mensaje-exito {
+  font-size: 1.125rem;
+  color: #6b7280;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .app-container {
@@ -390,5 +729,14 @@
   
   .productos-grid {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .modal-pago {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .metodos-pago {
+    grid-template-columns: 1fr;
   }
 }

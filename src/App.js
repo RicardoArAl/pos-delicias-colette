@@ -8,7 +8,7 @@ const ProductosMenu = {
     { id: 'e3', nombre: 'Papa carne', precio: 3000, descripcion: 'Empanada con papa y carne' },
     { id: 'e4', nombre: 'Pizza', precio: 3500, descripcion: 'Empanada con queso, tocineta y maiz' },
     { id: 'e5', nombre: 'Pollo champiñon', precio: 4000, descripcion: 'Empanada con champiñon y pollo' },
-    { id: 'e6', nombre: 'Papa carne/pollo', precio: 4000, descripcion: 'Papa rellena de carne o pollo desmechado' }
+    { id: 'e6', nombre: 'Papa carne/pollo', precio: 4500, descripcion: 'Papa rellena de carne o pollo desmechado' }
   ],
   perros: [
     { id: 'p1', nombre: 'Perro Caliente', precio: 14500, descripcion: 'Salchicha americana, tocineta, queso, papa chip y cebolla caramelizada' },
@@ -51,6 +51,11 @@ const ProductosMenu = {
 export default function App() {
   const [categoriaActiva, setCategoriaActiva] = useState('empanadas');
   const [pedido, setPedido] = useState([]);
+  const [mostrarPago, setMostrarPago] = useState(false);
+  const [metodoPago, setMetodoPago] = useState('');
+  const [montoRecibido, setMontoRecibido] = useState('');
+  const [pagoExitoso, setPagoExitoso] = useState(false);
+  const [numeroOrden, setNumeroOrden] = useState(null);
 
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
@@ -99,8 +104,52 @@ export default function App() {
     return pedido.reduce((total, item) => total + (item.precio * item.cantidad), 0);
   };
 
+  const calcularCambio = () => {
+    const recibido = parseFloat(montoRecibido) || 0;
+    const total = calcularTotal();
+    return recibido - total;
+  };
+
   const formatearPrecio = (precio) => {
     return `$${precio.toLocaleString('es-CO')}`;
+  };
+
+  const abrirPantallaPago = () => {
+    setMostrarPago(true);
+    setMetodoPago('');
+    setMontoRecibido('');
+  };
+
+  const cerrarPantallaPago = () => {
+    setMostrarPago(false);
+    setMetodoPago('');
+    setMontoRecibido('');
+  };
+
+  const confirmarPago = () => {
+    // Validar según método de pago
+    if (metodoPago === 'efectivo') {
+      const cambio = calcularCambio();
+      if (cambio < 0) {
+        alert('El monto recibido es menor al total');
+        return;
+      }
+    }
+
+    // Generar número de orden
+    const nuevaOrden = Math.floor(Math.random() * 9000) + 1000;
+    setNumeroOrden(nuevaOrden);
+    setPagoExitoso(true);
+
+    // Después de 3 segundos, cerrar todo y limpiar
+    setTimeout(() => {
+      setPagoExitoso(false);
+      setMostrarPago(false);
+      setPedido([]);
+      setMetodoPago('');
+      setMontoRecibido('');
+      setNumeroOrden(null);
+    }, 3000);
   };
 
   return (
@@ -230,13 +279,118 @@ export default function App() {
           <button
             disabled={pedido.length === 0}
             className="btn-pagar"
+            onClick={abrirPantallaPago}
           >
             Ir a Pagar
           </button>
           
-          <p className="fase-label">Fase 1: Interfaz de Pedidos</p>
+          <p className="fase-label">Fase 2: Gestión de Pagos</p>
         </div>
       </div>
+
+      {/* Modal de Pago */}
+      {mostrarPago && (
+        <div className="modal-overlay">
+          <div className="modal-pago">
+            {!pagoExitoso ? (
+              <>
+                <div className="modal-header">
+                  <h2>💳 Procesar Pago</h2>
+                  <button onClick={cerrarPantallaPago} className="btn-cerrar">✕</button>
+                </div>
+
+                <div className="modal-body">
+                  {/* Resumen del Pedido */}
+                  <div className="resumen-pedido">
+                    <h3>Resumen del Pedido</h3>
+                    <div className="resumen-items">
+                      {pedido.map(item => (
+                        <div key={item.id} className="resumen-item">
+                          <span>{item.cantidad}x {item.nombre}</span>
+                          <span>{formatearPrecio(item.precio * item.cantidad)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="resumen-total">
+                      <span>TOTAL</span>
+                      <span>{formatearPrecio(calcularTotal())}</span>
+                    </div>
+                  </div>
+
+                  {/* Método de Pago */}
+                  <div className="metodo-pago-section">
+                    <h3>Método de Pago</h3>
+                    <div className="metodos-pago">
+                      <button
+                        className={`metodo-btn ${metodoPago === 'efectivo' ? 'activo' : ''}`}
+                        onClick={() => setMetodoPago('efectivo')}
+                      >
+                        <span className="metodo-icon">💵</span>
+                        <span>Efectivo</span>
+                      </button>
+                      <button
+                        className={`metodo-btn ${metodoPago === 'transferencia' ? 'activo' : ''}`}
+                        onClick={() => setMetodoPago('transferencia')}
+                      >
+                        <span className="metodo-icon">📱</span>
+                        <span>Transferencia</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Campo de Efectivo */}
+                  {metodoPago === 'efectivo' && (
+                    <div className="efectivo-section">
+                      <label>Monto Recibido</label>
+                      <input
+                        type="number"
+                        className="input-monto"
+                        placeholder="Ingrese el monto"
+                        value={montoRecibido}
+                        onChange={(e) => setMontoRecibido(e.target.value)}
+                      />
+                      {montoRecibido && (
+                        <div className="cambio-info">
+                          <span>Cambio:</span>
+                          <span className={calcularCambio() < 0 ? 'cambio-negativo' : 'cambio-positivo'}>
+                            {formatearPrecio(calcularCambio())}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {metodoPago === 'transferencia' && (
+                    <div className="transferencia-info">
+                      <p>✅ Confirme que recibió la transferencia</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="modal-footer">
+                  <button onClick={cerrarPantallaPago} className="btn-cancelar">
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmarPago}
+                    className="btn-confirmar"
+                    disabled={!metodoPago || (metodoPago === 'efectivo' && calcularCambio() < 0)}
+                  >
+                    Confirmar Pago
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="pago-exitoso">
+                <div className="check-animation">✓</div>
+                <h2>¡Pago Exitoso!</h2>
+                <p className="numero-orden">Orden #{numeroOrden}</p>
+                <p className="mensaje-exito">El pedido ha sido procesado correctamente</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
