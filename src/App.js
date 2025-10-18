@@ -48,7 +48,6 @@ const ProductosMenu = {
   ]
 };
 
-// Funciones de localStorage
 const obtenerVentas = () => {
   const ventasGuardadas = localStorage.getItem('ventas-delicias-colette');
   return ventasGuardadas ? JSON.parse(ventasGuardadas) : [];
@@ -64,12 +63,12 @@ const guardarVenta = (venta) => {
 const obtenerProximoNumeroOrden = () => {
   const ventas = obtenerVentas();
   if (ventas.length === 0) return 1000;
-  
   const ultimaOrden = Math.max(...ventas.map(v => v.numeroOrden));
   return ultimaOrden + 1;
 };
 
 export default function App() {
+  const [vistaActual, setVistaActual] = useState('pedidos');
   const [categoriaActiva, setCategoriaActiva] = useState('empanadas');
   const [pedido, setPedido] = useState([]);
   const [mostrarPago, setMostrarPago] = useState(false);
@@ -78,6 +77,10 @@ export default function App() {
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [numeroOrden, setNumeroOrden] = useState(null);
   const [totalVentas, setTotalVentas] = useState(0);
+  const [ventas, setVentas] = useState([]);
+  const [filtroFecha, setFiltroFecha] = useState('todas');
+  const [busquedaOrden, setBusquedaOrden] = useState('');
+  const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
 
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
@@ -89,10 +92,10 @@ export default function App() {
     { id: 'bebidas', nombre: 'Bebidas', icon: '🥤' }
   ];
 
-  // Cargar total de ventas al iniciar
   useEffect(() => {
-    const ventas = obtenerVentas();
-    setTotalVentas(ventas.length);
+    const ventasGuardadas = obtenerVentas();
+    setVentas(ventasGuardadas);
+    setTotalVentas(ventasGuardadas.length);
   }, []);
 
   const agregarProducto = (producto) => {
@@ -142,6 +145,15 @@ export default function App() {
     return `$${precio.toLocaleString('es-CO')}`;
   };
 
+  const formatearFecha = (fechaISO) => {
+    const fecha = new Date(fechaISO + 'T00:00:00');
+    return fecha.toLocaleDateString('es-CO', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
   const abrirPantallaPago = () => {
     setMostrarPago(true);
     setMetodoPago('');
@@ -155,7 +167,6 @@ export default function App() {
   };
 
   const confirmarPago = () => {
-    // Validar según método de pago
     if (metodoPago === 'efectivo') {
       const cambio = calcularCambio();
       if (cambio < 0) {
@@ -164,16 +175,13 @@ export default function App() {
       }
     }
 
-    // Obtener siguiente número de orden
     const nuevaOrden = obtenerProximoNumeroOrden();
-    
-    // Crear objeto de venta
     const ahora = new Date();
     const venta = {
       id: `venta-${Date.now()}`,
       numeroOrden: nuevaOrden,
-      fecha: ahora.toISOString().split('T')[0], // YYYY-MM-DD
-      hora: ahora.toTimeString().split(' ')[0], // HH:MM:SS
+      fecha: ahora.toISOString().split('T')[0],
+      hora: ahora.toTimeString().split(' ')[0],
       productos: pedido.map(item => ({
         id: item.id,
         nombre: item.nombre,
@@ -186,17 +194,13 @@ export default function App() {
       total: calcularTotal()
     };
 
-    // Guardar en localStorage
     guardarVenta(venta);
-
-    // Actualizar contador de ventas
-    setTotalVentas(totalVentas + 1);
-
-    // Mostrar éxito
+    const ventasActualizadas = obtenerVentas();
+    setVentas(ventasActualizadas);
+    setTotalVentas(ventasActualizadas.length);
     setNumeroOrden(nuevaOrden);
     setPagoExitoso(true);
 
-    // Después de 3 segundos, cerrar todo y limpiar
     setTimeout(() => {
       setPagoExitoso(false);
       setMostrarPago(false);
@@ -207,250 +211,466 @@ export default function App() {
     }, 3000);
   };
 
-  return (
-    <div className="app-container">
-      {/* Panel Principal - Productos */}
-      <div className="main-panel">
-        {/* Header */}
-        <div className="header">
-          <div className="header-content">
-            <div>
-              <h1>🍔 Delicias de Colette</h1>
-              <p className="subtitle">Sistema POS - Toma de Pedidos</p>
-            </div>
-            <div className="stats-badge">
-              <span className="stats-label">Ventas del sistema:</span>
-              <span className="stats-number">{totalVentas}</span>
+  const filtrarVentas = () => {
+    let ventasFiltradas = [...ventas];
+
+    if (filtroFecha !== 'todas') {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      ventasFiltradas = ventasFiltradas.filter(venta => {
+        const fechaVenta = new Date(venta.fecha + 'T00:00:00');
+        
+        if (filtroFecha === 'hoy') {
+          return fechaVenta.getTime() === hoy.getTime();
+        } else if (filtroFecha === 'semana') {
+          const inicioSemana = new Date(hoy);
+          inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+          return fechaVenta >= inicioSemana;
+        } else if (filtroFecha === 'mes') {
+          return fechaVenta.getMonth() === hoy.getMonth() && 
+                 fechaVenta.getFullYear() === hoy.getFullYear();
+        }
+        return true;
+      });
+    }
+
+    if (busquedaOrden) {
+      ventasFiltradas = ventasFiltradas.filter(venta => 
+        venta.numeroOrden.toString().includes(busquedaOrden)
+      );
+    }
+
+    return ventasFiltradas.sort((a, b) => {
+      const fechaA = new Date(a.fecha + 'T' + a.hora);
+      const fechaB = new Date(b.fecha + 'T' + b.hora);
+      return fechaB - fechaA;
+    });
+  };
+
+  const ventasFiltradas = filtrarVentas();
+    if (vistaActual === 'pedidos') {
+    return (
+      <div className="app-container">
+        <div className="main-panel">
+          <div className="header">
+            <div className="header-content">
+              <div>
+                <h1>🍔 Delicias de Colette</h1>
+                <p className="subtitle">Sistema POS - Toma de Pedidos</p>
+              </div>
+              <div className="header-actions">
+                <button 
+                  className="btn-historial"
+                  onClick={() => setVistaActual('historial')}
+                >
+                  📋 Ver Historial
+                </button>
+                <div className="stats-badge">
+                  <span className="stats-label">Ventas totales:</span>
+                  <span className="stats-number">{totalVentas}</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Categorías */}
-        <div className="categorias-container">
-          {categorias.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setCategoriaActiva(cat.id)}
-              className={`categoria-btn ${categoriaActiva === cat.id ? 'activa' : ''}`}
-            >
-              <span className="categoria-icon">{cat.icon}</span>
-              {cat.nombre}
-            </button>
-          ))}
-        </div>
-
-        {/* Productos */}
-        <div className="productos-container">
-          <div className="productos-grid">
-            {ProductosMenu[categoriaActiva].map(producto => (
+          <div className="categorias-container">
+            {categorias.map(cat => (
               <button
-                key={producto.id}
-                onClick={() => agregarProducto(producto)}
-                className="producto-card"
+                key={cat.id}
+                onClick={() => setCategoriaActiva(cat.id)}
+                className={`categoria-btn ${categoriaActiva === cat.id ? 'activa' : ''}`}
               >
-                <h3>{producto.nombre}</h3>
-                {producto.descripcion && (
-                  <p className="producto-descripcion">{producto.descripcion}</p>
-                )}
-                <p className="producto-precio">{formatearPrecio(producto.precio)}</p>
+                <span className="categoria-icon">{cat.icon}</span>
+                {cat.nombre}
               </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Panel Lateral - Pedido */}
-      <div className="pedido-panel">
-        {/* Header del Pedido */}
-        <div className="pedido-header">
-          <div className="pedido-header-top">
-            <h2>🛒 Pedido Actual</h2>
-            <button
-              onClick={limpiarPedido}
-              className="btn-limpiar"
-              disabled={pedido.length === 0}
-            >
-              🗑️ Limpiar
-            </button>
-          </div>
-          <p className="pedido-count">{pedido.length} item(s)</p>
-        </div>
-
-        {/* Lista de Items */}
-        <div className="pedido-items">
-          {pedido.length === 0 ? (
-            <div className="pedido-vacio">
-              <div className="carrito-vacio">🛒</div>
-              <p className="texto-vacio">Pedido vacío</p>
-              <p className="texto-vacio-small">Toca un producto para agregarlo</p>
-            </div>
-          ) : (
-            <div className="items-lista">
-              {pedido.map(item => (
-                <div key={item.id} className="item-card">
-                  <div className="item-header">
-                    <div className="item-info">
-                      <h4>{item.nombre}</h4>
-                      <p className="item-precio">{formatearPrecio(item.precio)}</p>
-                    </div>
-                    <button
-                      onClick={() => eliminarItem(item.id)}
-                      className="btn-eliminar"
-                    >
-                      ❌
-                    </button>
-                  </div>
-                  
-                  <div className="item-controls">
-                    <div className="cantidad-control">
-                      <button
-                        onClick={() => cambiarCantidad(item.id, -1)}
-                        className="btn-cantidad btn-menos"
-                      >
-                        −
-                      </button>
-                      <span className="cantidad">{item.cantidad}</span>
-                      <button
-                        onClick={() => cambiarCantidad(item.id, 1)}
-                        className="btn-cantidad btn-mas"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div className="subtotal">
-                      <p className="subtotal-label">Subtotal</p>
-                      <p className="subtotal-valor">
-                        {formatearPrecio(item.precio * item.cantidad)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          <div className="productos-container">
+            <div className="productos-grid">
+              {ProductosMenu[categoriaActiva].map(producto => (
+                <button
+                  key={producto.id}
+                  onClick={() => agregarProducto(producto)}
+                  className="producto-card"
+                >
+                  <h3>{producto.nombre}</h3>
+                  {producto.descripcion && (
+                    <p className="producto-descripcion">{producto.descripcion}</p>
+                  )}
+                  <p className="producto-precio">{formatearPrecio(producto.precio)}</p>
+                </button>
               ))}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Total y Acciones */}
-        <div className="pedido-footer">
-          <div className="total-container">
-            <span className="total-label">TOTAL</span>
-            <span className="total-valor">
-              {formatearPrecio(calcularTotal())}
-            </span>
+        <div className="pedido-panel">
+          <div className="pedido-header">
+            <div className="pedido-header-top">
+              <h2>🛒 Pedido Actual</h2>
+              <button
+                onClick={limpiarPedido}
+                className="btn-limpiar"
+                disabled={pedido.length === 0}
+              >
+                🗑️ Limpiar
+              </button>
+            </div>
+            <p className="pedido-count">{pedido.length} item(s)</p>
           </div>
-          
-          <button
-            disabled={pedido.length === 0}
-            className="btn-pagar"
-            onClick={abrirPantallaPago}
-          >
-            Ir a Pagar
-          </button>
-          
-          <p className="fase-label">Fase 3: Almacenamiento Local</p>
+
+          <div className="pedido-items">
+            {pedido.length === 0 ? (
+              <div className="pedido-vacio">
+                <div className="carrito-vacio">🛒</div>
+                <p className="texto-vacio">Pedido vacío</p>
+                <p className="texto-vacio-small">Toca un producto para agregarlo</p>
+              </div>
+            ) : (
+              <div className="items-lista">
+                {pedido.map(item => (
+                  <div key={item.id} className="item-card">
+                    <div className="item-header">
+                      <div className="item-info">
+                        <h4>{item.nombre}</h4>
+                        <p className="item-precio">{formatearPrecio(item.precio)}</p>
+                      </div>
+                      <button
+                        onClick={() => eliminarItem(item.id)}
+                        className="btn-eliminar"
+                      >
+                        ❌
+                      </button>
+                    </div>
+                    
+                    <div className="item-controls">
+                      <div className="cantidad-control">
+                        <button
+                          onClick={() => cambiarCantidad(item.id, -1)}
+                          className="btn-cantidad btn-menos"
+                        >
+                          −
+                        </button>
+                        <span className="cantidad">{item.cantidad}</span>
+                        <button
+                          onClick={() => cambiarCantidad(item.id, 1)}
+                          className="btn-cantidad btn-mas"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="subtotal">
+                        <p className="subtotal-label">Subtotal</p>
+                        <p className="subtotal-valor">
+                          {formatearPrecio(item.precio * item.cantidad)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="pedido-footer">
+            <div className="total-container">
+              <span className="total-label">TOTAL</span>
+              <span className="total-valor">
+                {formatearPrecio(calcularTotal())}
+              </span>
+            </div>
+            
+            <button
+              disabled={pedido.length === 0}
+              className="btn-pagar"
+              onClick={abrirPantallaPago}
+            >
+              Ir a Pagar
+            </button>
+            
+            <p className="fase-label">Fase 4: Historial de Ventas</p>
+          </div>
+        </div>
+
+        {mostrarPago && (
+          <div className="modal-overlay">
+            <div className="modal-pago">
+              {!pagoExitoso ? (
+                <>
+                  <div className="modal-header">
+                    <h2>💳 Procesar Pago</h2>
+                    <button onClick={cerrarPantallaPago} className="btn-cerrar">✕</button>
+                  </div>
+
+                  <div className="modal-body">
+                    <div className="resumen-pedido">
+                      <h3>Resumen del Pedido</h3>
+                      <div className="resumen-items">
+                        {pedido.map(item => (
+                          <div key={item.id} className="resumen-item">
+                            <span>{item.cantidad}x {item.nombre}</span>
+                            <span>{formatearPrecio(item.precio * item.cantidad)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="resumen-total">
+                        <span>TOTAL</span>
+                        <span>{formatearPrecio(calcularTotal())}</span>
+                      </div>
+                    </div>
+
+                    <div className="metodo-pago-section">
+                      <h3>Método de Pago</h3>
+                      <div className="metodos-pago">
+                        <button
+                          className={`metodo-btn ${metodoPago === 'efectivo' ? 'activo' : ''}`}
+                          onClick={() => setMetodoPago('efectivo')}
+                        >
+                          <span className="metodo-icon">💵</span>
+                          <span>Efectivo</span>
+                        </button>
+                        <button
+                          className={`metodo-btn ${metodoPago === 'transferencia' ? 'activo' : ''}`}
+                          onClick={() => setMetodoPago('transferencia')}
+                        >
+                          <span className="metodo-icon">📱</span>
+                          <span>Transferencia</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {metodoPago === 'efectivo' && (
+                      <div className="efectivo-section">
+                        <label>Monto Recibido</label>
+                        <input
+                          type="number"
+                          className="input-monto"
+                          placeholder="Ingrese el monto"
+                          value={montoRecibido}
+                          onChange={(e) => setMontoRecibido(e.target.value)}
+                        />
+                        {montoRecibido && (
+                          <div className="cambio-info">
+                            <span>Cambio:</span>
+                            <span className={calcularCambio() < 0 ? 'cambio-negativo' : 'cambio-positivo'}>
+                              {formatearPrecio(calcularCambio())}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {metodoPago === 'transferencia' && (
+                      <div className="transferencia-info">
+                        <p>✅ Confirme que recibió la transferencia</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="modal-footer">
+                    <button onClick={cerrarPantallaPago} className="btn-cancelar">
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={confirmarPago}
+                      className="btn-confirmar"
+                      disabled={!metodoPago || (metodoPago === 'efectivo' && calcularCambio() < 0)}
+                    >
+                      Confirmar Pago
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="pago-exitoso">
+                  <div className="check-animation">✓</div>
+                  <h2>¡Pago Exitoso!</h2>
+                  <p className="numero-orden">Orden #{numeroOrden}</p>
+                  <p className="mensaje-exito">El pedido ha sido procesado y guardado correctamente</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-container historial-view">
+      <div className="historial-container">
+        <div className="historial-header">
+          <div className="historial-header-top">
+            <h1>📋 Historial de Ventas</h1>
+            <button 
+              className="btn-volver"
+              onClick={() => {
+                setVistaActual('pedidos');
+                setVentaSeleccionada(null);
+              }}
+            >
+              ← Volver a Pedidos
+            </button>
+          </div>
+
+          <div className="historial-filtros">
+            <div className="filtro-grupo">
+              <label>Filtrar por fecha:</label>
+              <div className="filtro-botones">
+                <button 
+                  className={`filtro-btn ${filtroFecha === 'todas' ? 'activo' : ''}`}
+                  onClick={() => setFiltroFecha('todas')}
+                >
+                  Todas
+                </button>
+                <button 
+                  className={`filtro-btn ${filtroFecha === 'hoy' ? 'activo' : ''}`}
+                  onClick={() => setFiltroFecha('hoy')}
+                >
+                  Hoy
+                </button>
+                <button 
+                  className={`filtro-btn ${filtroFecha === 'semana' ? 'activo' : ''}`}
+                  onClick={() => setFiltroFecha('semana')}
+                >
+                  Esta Semana
+                </button>
+                <button 
+                  className={`filtro-btn ${filtroFecha === 'mes' ? 'activo' : ''}`}
+                  onClick={() => setFiltroFecha('mes')}
+                >
+                  Este Mes
+                </button>
+              </div>
+            </div>
+
+            <div className="filtro-grupo">
+              <label>Buscar por número de orden:</label>
+              <input
+                type="text"
+                className="input-busqueda"
+                placeholder="Ej: 1001"
+                value={busquedaOrden}
+                onChange={(e) => setBusquedaOrden(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="historial-contenido">
+          {ventasFiltradas.length === 0 ? (
+            <div className="historial-vacio">
+              <div className="icono-vacio">📭</div>
+              <p>No se encontraron ventas</p>
+              <p className="texto-small">
+                {busquedaOrden ? 'Intenta con otro número de orden' : 'Aún no hay ventas registradas'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="historial-stats">
+                <div className="stat-card">
+                  <span className="stat-label">Ventas encontradas</span>
+                  <span className="stat-valor">{ventasFiltradas.length}</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-label">Total vendido</span>
+                  <span className="stat-valor">
+                    {formatearPrecio(ventasFiltradas.reduce((sum, v) => sum + v.total, 0))}
+                  </span>
+                </div>
+              </div>
+
+              <div className="ventas-lista">
+                {ventasFiltradas.map(venta => (
+                  <div 
+                    key={venta.id} 
+                    className="venta-card"
+                    onClick={() => setVentaSeleccionada(venta)}
+                  >
+                    <div className="venta-header">
+                      <span className="venta-orden">Orden #{venta.numeroOrden}</span>
+                      <span className="venta-total">{formatearPrecio(venta.total)}</span>
+                    </div>
+                    <div className="venta-info">
+                      <span className="venta-fecha">📅 {formatearFecha(venta.fecha)}</span>
+                      <span className="venta-hora">🕐 {venta.hora}</span>
+                      <span className={`venta-metodo ${venta.metodoPago}`}>
+                        {venta.metodoPago === 'efectivo' ? '💵 Efectivo' : '📱 Transferencia'}
+                      </span>
+                    </div>
+                    <div className="venta-productos">
+                      {venta.productos.length} producto(s)
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Modal de Pago */}
-      {mostrarPago && (
-        <div className="modal-overlay">
-          <div className="modal-pago">
-            {!pagoExitoso ? (
-              <>
-                <div className="modal-header">
-                  <h2>💳 Procesar Pago</h2>
-                  <button onClick={cerrarPantallaPago} className="btn-cerrar">✕</button>
+      {ventaSeleccionada && (
+        <div className="modal-overlay" onClick={() => setVentaSeleccionada(null)}>
+          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🧾 Detalles de la Orden #{ventaSeleccionada.numeroOrden}</h2>
+              <button onClick={() => setVentaSeleccionada(null)} className="btn-cerrar">✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="detalle-info">
+                <div className="info-row">
+                  <span className="info-label">Fecha:</span>
+                  <span>{formatearFecha(ventaSeleccionada.fecha)}</span>
                 </div>
-
-                <div className="modal-body">
-                  {/* Resumen del Pedido */}
-                  <div className="resumen-pedido">
-                    <h3>Resumen del Pedido</h3>
-                    <div className="resumen-items">
-                      {pedido.map(item => (
-                        <div key={item.id} className="resumen-item">
-                          <span>{item.cantidad}x {item.nombre}</span>
-                          <span>{formatearPrecio(item.precio * item.cantidad)}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="resumen-total">
-                      <span>TOTAL</span>
-                      <span>{formatearPrecio(calcularTotal())}</span>
-                    </div>
-                  </div>
-
-                  {/* Método de Pago */}
-                  <div className="metodo-pago-section">
-                    <h3>Método de Pago</h3>
-                    <div className="metodos-pago">
-                      <button
-                        className={`metodo-btn ${metodoPago === 'efectivo' ? 'activo' : ''}`}
-                        onClick={() => setMetodoPago('efectivo')}
-                      >
-                        <span className="metodo-icon">💵</span>
-                        <span>Efectivo</span>
-                      </button>
-                      <button
-                        className={`metodo-btn ${metodoPago === 'transferencia' ? 'activo' : ''}`}
-                        onClick={() => setMetodoPago('transferencia')}
-                      >
-                        <span className="metodo-icon">📱</span>
-                        <span>Transferencia</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Campo de Efectivo */}
-                  {metodoPago === 'efectivo' && (
-                    <div className="efectivo-section">
-                      <label>Monto Recibido</label>
-                      <input
-                        type="number"
-                        className="input-monto"
-                        placeholder="Ingrese el monto"
-                        value={montoRecibido}
-                        onChange={(e) => setMontoRecibido(e.target.value)}
-                      />
-                      {montoRecibido && (
-                        <div className="cambio-info">
-                          <span>Cambio:</span>
-                          <span className={calcularCambio() < 0 ? 'cambio-negativo' : 'cambio-positivo'}>
-                            {formatearPrecio(calcularCambio())}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {metodoPago === 'transferencia' && (
-                    <div className="transferencia-info">
-                      <p>✅ Confirme que recibió la transferencia</p>
-                    </div>
-                  )}
+                <div className="info-row">
+                  <span className="info-label">Hora:</span>
+                  <span>{ventaSeleccionada.hora}</span>
                 </div>
-
-                <div className="modal-footer">
-                  <button onClick={cerrarPantallaPago} className="btn-cancelar">
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={confirmarPago}
-                    className="btn-confirmar"
-                    disabled={!metodoPago || (metodoPago === 'efectivo' && calcularCambio() < 0)}
-                  >
-                    Confirmar Pago
-                  </button>
+                <div className="info-row">
+                  <span className="info-label">Método de pago:</span>
+                  <span className={`metodo-badge ${ventaSeleccionada.metodoPago}`}>
+                    {ventaSeleccionada.metodoPago === 'efectivo' ? '💵 Efectivo' : '📱 Transferencia'}
+                  </span>
                 </div>
-              </>
-            ) : (
-              <div className="pago-exitoso">
-                <div className="check-animation">✓</div>
-                <h2>¡Pago Exitoso!</h2>
-                <p className="numero-orden">Orden #{numeroOrden}</p>
-                <p className="mensaje-exito">El pedido ha sido procesado y guardado correctamente</p>
+                {ventaSeleccionada.metodoPago === 'efectivo' && (
+                  <>
+                    <div className="info-row">
+                      <span className="info-label">Monto recibido:</span>
+                      <span>{formatearPrecio(ventaSeleccionada.montoRecibido)}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Cambio:</span>
+                      <span>{formatearPrecio(ventaSeleccionada.cambio)}</span>
+                    </div>
+                  </>
+                )}
               </div>
-            )}
+
+              <div className="detalle-productos">
+                <h3>Productos</h3>
+                <div className="productos-detalle-lista">
+                  {ventaSeleccionada.productos.map((prod, index) => (
+                    <div key={index} className="producto-detalle-item">
+                      <div className="producto-detalle-info">
+                        <span className="producto-cantidad">{prod.cantidad}x</span>
+                        <span className="producto-nombre">{prod.nombre}</span>
+                      </div>
+                      <span className="producto-precio">
+                        {formatearPrecio(prod.precio * prod.cantidad)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="detalle-total">
+                <span className="total-label">TOTAL</span>
+                <span className="total-valor">{formatearPrecio(ventaSeleccionada.total)}</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
