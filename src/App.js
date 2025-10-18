@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 const ProductosMenu = {
@@ -48,6 +48,27 @@ const ProductosMenu = {
   ]
 };
 
+// Funciones de localStorage
+const obtenerVentas = () => {
+  const ventasGuardadas = localStorage.getItem('ventas-delicias-colette');
+  return ventasGuardadas ? JSON.parse(ventasGuardadas) : [];
+};
+
+const guardarVenta = (venta) => {
+  const ventas = obtenerVentas();
+  ventas.push(venta);
+  localStorage.setItem('ventas-delicias-colette', JSON.stringify(ventas));
+  console.log('✅ Venta guardada:', venta);
+};
+
+const obtenerProximoNumeroOrden = () => {
+  const ventas = obtenerVentas();
+  if (ventas.length === 0) return 1000;
+  
+  const ultimaOrden = Math.max(...ventas.map(v => v.numeroOrden));
+  return ultimaOrden + 1;
+};
+
 export default function App() {
   const [categoriaActiva, setCategoriaActiva] = useState('empanadas');
   const [pedido, setPedido] = useState([]);
@@ -56,6 +77,7 @@ export default function App() {
   const [montoRecibido, setMontoRecibido] = useState('');
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [numeroOrden, setNumeroOrden] = useState(null);
+  const [totalVentas, setTotalVentas] = useState(0);
 
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
@@ -66,6 +88,12 @@ export default function App() {
     { id: 'platos', nombre: 'Platos', icon: '🍖' },
     { id: 'bebidas', nombre: 'Bebidas', icon: '🥤' }
   ];
+
+  // Cargar total de ventas al iniciar
+  useEffect(() => {
+    const ventas = obtenerVentas();
+    setTotalVentas(ventas.length);
+  }, []);
 
   const agregarProducto = (producto) => {
     const existe = pedido.find(item => item.id === producto.id);
@@ -136,8 +164,35 @@ export default function App() {
       }
     }
 
-    // Generar número de orden
-    const nuevaOrden = Math.floor(Math.random() * 9000) + 1000;
+    // Obtener siguiente número de orden
+    const nuevaOrden = obtenerProximoNumeroOrden();
+    
+    // Crear objeto de venta
+    const ahora = new Date();
+    const venta = {
+      id: `venta-${Date.now()}`,
+      numeroOrden: nuevaOrden,
+      fecha: ahora.toISOString().split('T')[0], // YYYY-MM-DD
+      hora: ahora.toTimeString().split(' ')[0], // HH:MM:SS
+      productos: pedido.map(item => ({
+        id: item.id,
+        nombre: item.nombre,
+        precio: item.precio,
+        cantidad: item.cantidad
+      })),
+      metodoPago: metodoPago,
+      montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
+      cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
+      total: calcularTotal()
+    };
+
+    // Guardar en localStorage
+    guardarVenta(venta);
+
+    // Actualizar contador de ventas
+    setTotalVentas(totalVentas + 1);
+
+    // Mostrar éxito
     setNumeroOrden(nuevaOrden);
     setPagoExitoso(true);
 
@@ -158,8 +213,16 @@ export default function App() {
       <div className="main-panel">
         {/* Header */}
         <div className="header">
-          <h1>🍔 Delicias de Colette</h1>
-          <p className="subtitle">Sistema POS - Toma de Pedidos</p>
+          <div className="header-content">
+            <div>
+              <h1>🍔 Delicias de Colette</h1>
+              <p className="subtitle">Sistema POS - Toma de Pedidos</p>
+            </div>
+            <div className="stats-badge">
+              <span className="stats-label">Ventas del sistema:</span>
+              <span className="stats-number">{totalVentas}</span>
+            </div>
+          </div>
         </div>
 
         {/* Categorías */}
@@ -284,7 +347,7 @@ export default function App() {
             Ir a Pagar
           </button>
           
-          <p className="fase-label">Fase 2: Gestión de Pagos</p>
+          <p className="fase-label">Fase 3: Almacenamiento Local</p>
         </div>
       </div>
 
@@ -385,7 +448,7 @@ export default function App() {
                 <div className="check-animation">✓</div>
                 <h2>¡Pago Exitoso!</h2>
                 <p className="numero-orden">Orden #{numeroOrden}</p>
-                <p className="mensaje-exito">El pedido ha sido procesado correctamente</p>
+                <p className="mensaje-exito">El pedido ha sido procesado y guardado correctamente</p>
               </div>
             )}
           </div>
