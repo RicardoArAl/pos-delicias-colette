@@ -67,6 +67,104 @@ const obtenerProximoNumeroOrden = () => {
   return ultimaOrden + 1;
 };
 
+// Función para exportar a CSV
+const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
+  if (ventas.length === 0) {
+    alert('No hay ventas para exportar');
+    return;
+  }
+
+  // Crear encabezados
+  const encabezados = [
+    'Número de Orden',
+    'Fecha',
+    'Hora',
+    'Productos',
+    'Cantidades',
+    'Método de Pago',
+    'Monto Recibido',
+    'Cambio',
+    'Total'
+  ];
+
+  // Crear filas de datos
+  const filas = ventas.map(venta => {
+    const productos = venta.productos.map(p => p.nombre).join('; ');
+    const cantidades = venta.productos.map(p => p.cantidad).join('; ');
+    
+    return [
+      venta.numeroOrden,
+      venta.fecha,
+      venta.hora,
+      `"${productos}"`,
+      cantidades,
+      venta.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia',
+      venta.montoRecibido || '',
+      venta.cambio || '',
+      venta.total
+    ];
+  });
+
+  // Construir CSV
+  let csvContent = encabezados.join(',') + '\n';
+  filas.forEach(fila => {
+    csvContent += fila.join(',') + '\n';
+  });
+
+  // Crear y descargar archivo
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  const fecha = new Date().toISOString().split('T')[0];
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${nombreArchivo}_${fecha}.csv`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  console.log('✅ Archivo CSV descargado:', `${nombreArchivo}_${fecha}.csv`);
+};
+
+// Función para exportar reporte resumido
+const exportarReporteCSV = (estadisticas, periodo) => {
+  const encabezados = ['Métrica', 'Valor'];
+  
+  const filas = [
+    ['Período', periodo],
+    ['Total Vendido', estadisticas.totalVendido],
+    ['Número de Órdenes', estadisticas.numeroOrdenes],
+    ['Promedio por Venta', estadisticas.promedioVenta.toFixed(0)],
+    ['Total Efectivo', estadisticas.totalEfectivo],
+    ['Total Transferencia', estadisticas.totalTransferencia],
+    [''],
+    ['Top Productos', 'Cantidad'],
+    ...estadisticas.topProductos.map(p => [p.nombre, p.cantidad])
+  ];
+
+  let csvContent = encabezados.join(',') + '\n';
+  filas.forEach(fila => {
+    csvContent += fila.join(',') + '\n';
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  const fecha = new Date().toISOString().split('T')[0];
+  link.setAttribute('href', url);
+  link.setAttribute('download', `reporte_${periodo}_${fecha}.csv`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  console.log('✅ Reporte CSV descargado');
+};
+
 export default function App() {
   const [vistaActual, setVistaActual] = useState('pedidos');
   const [categoriaActiva, setCategoriaActiva] = useState('empanadas');
@@ -290,7 +388,6 @@ export default function App() {
     const numeroOrdenes = ventasDelPeriodo.length;
     const promedioVenta = numeroOrdenes > 0 ? totalVendido / numeroOrdenes : 0;
 
-    // Calcular productos más vendidos
     const productosVendidos = {};
     ventasDelPeriodo.forEach(venta => {
       venta.productos.forEach(prod => {
@@ -466,7 +563,7 @@ export default function App() {
               Ir a Pagar
             </button>
             
-            <p className="fase-label">Fase 5: Reportes y Dashboard</p>
+            <p className="fase-label">Fase 6: Exportación de Datos</p>
           </div>
         </div>
 
@@ -580,12 +677,21 @@ export default function App() {
           <div className="reportes-header">
             <div className="reportes-header-top">
               <h1>📊 Reportes y Estadísticas</h1>
-              <button 
-                className="btn-volver"
-                onClick={() => setVistaActual('pedidos')}
-              >
-                ← Volver a Pedidos
-              </button>
+              <div className="reportes-header-actions">
+                <button 
+                  className="btn-exportar"
+                  onClick={() => exportarReporteCSV(estadisticas, periodoReporte)}
+                  disabled={estadisticas.numeroOrdenes === 0}
+                >
+                  📥 Exportar Reporte
+                </button>
+                <button 
+                  className="btn-volver"
+                  onClick={() => setVistaActual('pedidos')}
+                >
+                  ← Volver a Pedidos
+                </button>
+              </div>
             </div>
 
             <div className="reportes-filtro">
@@ -628,7 +734,6 @@ export default function App() {
               </div>
             ) : (
               <>
-                {/* Tarjetas de métricas principales */}
                 <div className="metricas-grid">
                   <div className="metrica-card principal">
                     <div className="metrica-icono">💰</div>
@@ -655,7 +760,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Desglose por método de pago */}
                 <div className="seccion-reporte">
                   <h2>💳 Desglose por Método de Pago</h2>
                   <div className="metodos-pago-grid">
@@ -691,7 +795,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Top productos más vendidos */}
                 <div className="seccion-reporte">
                   <h2>🏆 Top 5 Productos Más Vendidos</h2>
                   {estadisticas.topProductos.length === 0 ? (
@@ -732,15 +835,24 @@ export default function App() {
         <div className="historial-header">
           <div className="historial-header-top">
             <h1>📋 Historial de Ventas</h1>
-            <button 
-              className="btn-volver"
-              onClick={() => {
-                setVistaActual('pedidos');
-                setVentaSeleccionada(null);
-              }}
-            >
-              ← Volver a Pedidos
-            </button>
+            <div className="historial-header-actions">
+              <button 
+                className="btn-exportar"
+                onClick={() => exportarVentasCSV(ventasFiltradas, 'historial_ventas')}
+                disabled={ventasFiltradas.length === 0}
+              >
+                📥 Exportar a CSV
+              </button>
+              <button 
+                className="btn-volver"
+                onClick={() => {
+                  setVistaActual('pedidos');
+                  setVentaSeleccionada(null);
+                }}
+              >
+                ← Volver a Pedidos
+              </button>
+            </div>
           </div>
 
           <div className="historial-filtros">
