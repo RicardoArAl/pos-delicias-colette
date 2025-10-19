@@ -7,8 +7,8 @@ const ProductosMenu = {
     { id: 'e2', nombre: 'Arroz carne', precio: 3000, descripcion: 'Empanada con arroz y carne' },
     { id: 'e3', nombre: 'Papa carne', precio: 3000, descripcion: 'Empanada con papa y carne' },
     { id: 'e4', nombre: 'Pizza', precio: 3500, descripcion: 'Empanada con queso, tocineta y maiz' },
-    { id: 'e5', nombre: 'Pollo champiñon', precio: 4000, descripcion: 'Empanada con champiñon y pollo' },
-    { id: 'e6', nombre: 'Papa carne/pollo', precio: 4500, descripcion: 'Papa rellena de carne o pollo desmechado' }
+    { id: 'e5', nombre: 'Pollo champiñon', precio: 20000, descripcion: 'Empanada con champiñon y pollo' },
+    { id: 'e6', nombre: 'Papa carne/pollo', precio: 20000, descripcion: 'Papa rellena de carne o pollo desmechado' }
   ],
   perros: [
     { id: 'p1', nombre: 'Perro Caliente', precio: 14500, descripcion: 'Salchicha americana, tocineta, queso, papa chip y cebolla caramelizada' },
@@ -81,6 +81,7 @@ export default function App() {
   const [filtroFecha, setFiltroFecha] = useState('todas');
   const [busquedaOrden, setBusquedaOrden] = useState('');
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
+  const [periodoReporte, setPeriodoReporte] = useState('todo');
 
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
@@ -248,8 +249,77 @@ export default function App() {
     });
   };
 
+  const filtrarVentasPorPeriodo = () => {
+    let ventasFiltradas = [...ventas];
+
+    if (periodoReporte !== 'todo') {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      ventasFiltradas = ventasFiltradas.filter(venta => {
+        const fechaVenta = new Date(venta.fecha + 'T00:00:00');
+        
+        if (periodoReporte === 'hoy') {
+          return fechaVenta.getTime() === hoy.getTime();
+        } else if (periodoReporte === 'semana') {
+          const inicioSemana = new Date(hoy);
+          inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+          return fechaVenta >= inicioSemana;
+        } else if (periodoReporte === 'mes') {
+          return fechaVenta.getMonth() === hoy.getMonth() && 
+                 fechaVenta.getFullYear() === hoy.getFullYear();
+        }
+        return true;
+      });
+    }
+
+    return ventasFiltradas;
+  };
+
+  const calcularEstadisticas = () => {
+    const ventasDelPeriodo = filtrarVentasPorPeriodo();
+    
+    const totalVendido = ventasDelPeriodo.reduce((sum, v) => sum + v.total, 0);
+    const totalEfectivo = ventasDelPeriodo
+      .filter(v => v.metodoPago === 'efectivo')
+      .reduce((sum, v) => sum + v.total, 0);
+    const totalTransferencia = ventasDelPeriodo
+      .filter(v => v.metodoPago === 'transferencia')
+      .reduce((sum, v) => sum + v.total, 0);
+    
+    const numeroOrdenes = ventasDelPeriodo.length;
+    const promedioVenta = numeroOrdenes > 0 ? totalVendido / numeroOrdenes : 0;
+
+    // Calcular productos más vendidos
+    const productosVendidos = {};
+    ventasDelPeriodo.forEach(venta => {
+      venta.productos.forEach(prod => {
+        if (productosVendidos[prod.nombre]) {
+          productosVendidos[prod.nombre] += prod.cantidad;
+        } else {
+          productosVendidos[prod.nombre] = prod.cantidad;
+        }
+      });
+    });
+
+    const topProductos = Object.entries(productosVendidos)
+      .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 5);
+
+    return {
+      totalVendido,
+      totalEfectivo,
+      totalTransferencia,
+      numeroOrdenes,
+      promedioVenta,
+      topProductos
+    };
+  };
+
   const ventasFiltradas = filtrarVentas();
-    if (vistaActual === 'pedidos') {
+  const estadisticas = calcularEstadisticas();
+  if (vistaActual === 'pedidos') {
     return (
       <div className="app-container">
         <div className="main-panel">
@@ -261,10 +331,16 @@ export default function App() {
               </div>
               <div className="header-actions">
                 <button 
+                  className="btn-reportes"
+                  onClick={() => setVistaActual('reportes')}
+                >
+                  📊 Reportes
+                </button>
+                <button 
                   className="btn-historial"
                   onClick={() => setVistaActual('historial')}
                 >
-                  📋 Ver Historial
+                  📋 Historial
                 </button>
                 <div className="stats-badge">
                   <span className="stats-label">Ventas totales:</span>
@@ -390,7 +466,7 @@ export default function App() {
               Ir a Pagar
             </button>
             
-            <p className="fase-label">Fase 4: Historial de Ventas</p>
+            <p className="fase-label">Fase 5: Reportes y Dashboard</p>
           </div>
         </div>
 
@@ -493,6 +569,159 @@ export default function App() {
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (vistaActual === 'reportes') {
+    return (
+      <div className="app-container reportes-view">
+        <div className="reportes-container">
+          <div className="reportes-header">
+            <div className="reportes-header-top">
+              <h1>📊 Reportes y Estadísticas</h1>
+              <button 
+                className="btn-volver"
+                onClick={() => setVistaActual('pedidos')}
+              >
+                ← Volver a Pedidos
+              </button>
+            </div>
+
+            <div className="reportes-filtro">
+              <label>Período:</label>
+              <div className="periodo-botones">
+                <button 
+                  className={`periodo-btn ${periodoReporte === 'hoy' ? 'activo' : ''}`}
+                  onClick={() => setPeriodoReporte('hoy')}
+                >
+                  Hoy
+                </button>
+                <button 
+                  className={`periodo-btn ${periodoReporte === 'semana' ? 'activo' : ''}`}
+                  onClick={() => setPeriodoReporte('semana')}
+                >
+                  Esta Semana
+                </button>
+                <button 
+                  className={`periodo-btn ${periodoReporte === 'mes' ? 'activo' : ''}`}
+                  onClick={() => setPeriodoReporte('mes')}
+                >
+                  Este Mes
+                </button>
+                <button 
+                  className={`periodo-btn ${periodoReporte === 'todo' ? 'activo' : ''}`}
+                  onClick={() => setPeriodoReporte('todo')}
+                >
+                  Todo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="reportes-contenido">
+            {estadisticas.numeroOrdenes === 0 ? (
+              <div className="reportes-vacio">
+                <div className="icono-vacio">📊</div>
+                <p>No hay ventas en este período</p>
+                <p className="texto-small">Realiza algunas ventas para ver estadísticas</p>
+              </div>
+            ) : (
+              <>
+                {/* Tarjetas de métricas principales */}
+                <div className="metricas-grid">
+                  <div className="metrica-card principal">
+                    <div className="metrica-icono">💰</div>
+                    <div className="metrica-info">
+                      <span className="metrica-label">Total Vendido</span>
+                      <span className="metrica-valor">{formatearPrecio(estadisticas.totalVendido)}</span>
+                    </div>
+                  </div>
+
+                  <div className="metrica-card">
+                    <div className="metrica-icono">🛒</div>
+                    <div className="metrica-info">
+                      <span className="metrica-label">Número de Órdenes</span>
+                      <span className="metrica-valor">{estadisticas.numeroOrdenes}</span>
+                    </div>
+                  </div>
+
+                  <div className="metrica-card">
+                    <div className="metrica-icono">📈</div>
+                    <div className="metrica-info">
+                      <span className="metrica-label">Promedio por Venta</span>
+                      <span className="metrica-valor">{formatearPrecio(estadisticas.promedioVenta)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desglose por método de pago */}
+                <div className="seccion-reporte">
+                  <h2>💳 Desglose por Método de Pago</h2>
+                  <div className="metodos-pago-grid">
+                    <div className="metodo-pago-card efectivo">
+                      <div className="metodo-pago-header">
+                        <span className="metodo-pago-icono">💵</span>
+                        <span className="metodo-pago-nombre">Efectivo</span>
+                      </div>
+                      <div className="metodo-pago-monto">
+                        {formatearPrecio(estadisticas.totalEfectivo)}
+                      </div>
+                      <div className="metodo-pago-porcentaje">
+                        {estadisticas.totalVendido > 0 
+                          ? ((estadisticas.totalEfectivo / estadisticas.totalVendido) * 100).toFixed(1)
+                          : 0}% del total
+                      </div>
+                    </div>
+
+                    <div className="metodo-pago-card transferencia">
+                      <div className="metodo-pago-header">
+                        <span className="metodo-pago-icono">📱</span>
+                        <span className="metodo-pago-nombre">Transferencia</span>
+                      </div>
+                      <div className="metodo-pago-monto">
+                        {formatearPrecio(estadisticas.totalTransferencia)}
+                      </div>
+                      <div className="metodo-pago-porcentaje">
+                        {estadisticas.totalVendido > 0 
+                          ? ((estadisticas.totalTransferencia / estadisticas.totalVendido) * 100).toFixed(1)
+                          : 0}% del total
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top productos más vendidos */}
+                <div className="seccion-reporte">
+                  <h2>🏆 Top 5 Productos Más Vendidos</h2>
+                  {estadisticas.topProductos.length === 0 ? (
+                    <p className="texto-vacio-seccion">No hay datos de productos</p>
+                  ) : (
+                    <div className="top-productos-lista">
+                      {estadisticas.topProductos.map((producto, index) => (
+                        <div key={index} className="top-producto-item">
+                          <div className="producto-ranking">#{index + 1}</div>
+                          <div className="producto-info-top">
+                            <span className="producto-nombre-top">{producto.nombre}</span>
+                            <span className="producto-cantidad-top">{producto.cantidad} unidades</span>
+                          </div>
+                          <div className="producto-barra">
+                            <div 
+                              className="producto-barra-fill"
+                              style={{
+                                width: `${(producto.cantidad / estadisticas.topProductos[0].cantidad) * 100}%`
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
