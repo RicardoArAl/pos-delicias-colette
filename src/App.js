@@ -5,6 +5,11 @@ import {
   obtenerVentasFirebase,
   obtenerProximoNumeroOrdenFirebase 
 } from './firebaseService';
+import { 
+  guardarOrdenPendiente,
+  obtenerOrdenesPendientes,
+  obtenerProximoNumeroOrdenTotal
+} from './firebasePendientes';
 
 const ProductosMenu = {
   empanadas: [
@@ -173,10 +178,17 @@ export default function App() {
   };
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [ordenesPendientes, setOrdenesPendientes] = useState([]);
+  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
+  const [mostrarDetalleOrden, setMostrarDetalleOrden] = useState(false);
+  const [modoAgregarProductos, setModoAgregarProductos] = useState(false);
+  const [productosTemporales, setProductosTemporales] = useState([]);
+  const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
+  const [mostrarConfirmacionPendiente, setMostrarConfirmacionPendiente] = useState(false);
+  const [numeroOrdenPendiente, setNumeroOrdenPendiente] = useState(null);
   const limpiarMontoRecibido = () => {
     setMontoRecibido('');
   };
-
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
     { id: 'perros', nombre: 'Perros', icon: '🌭' },
@@ -189,25 +201,32 @@ export default function App() {
 
   // Cargar ventas desde Firebase al iniciar
   useEffect(() => {
-  const cargarVentasIniciales = async () => {
+  const cargarDatosIniciales = async () => {
     try {
       setCargando(true);
       setError(null);
       
-      const ventasFirebase = await obtenerVentasFirebase();
+      // Cargar ventas y órdenes pendientes en paralelo
+      const [ventasFirebase, pendientesFirebase] = await Promise.all([
+        obtenerVentasFirebase(),
+        obtenerOrdenesPendientes()
+      ]);
+      
       setVentas(ventasFirebase);
       setTotalVentas(ventasFirebase.length);
+      setOrdenesPendientes(pendientesFirebase);
       
-      console.log('✅ Ventas cargadas desde Firebase');
+      console.log('✅ Ventas cargadas:', ventasFirebase.length);
+      console.log('✅ Órdenes pendientes:', pendientesFirebase.length);
     } catch (error) {
-      console.error('❌ Error al cargar ventas:', error);
-      setError('No se pudieron cargar las ventas. Intenta recargar la página.');
+      console.error('❌ Error al cargar datos:', error);
+      setError('No se pudieron cargar los datos. Intenta recargar la página.');
     } finally {
       setCargando(false);
     }
   };
 
-  cargarVentasIniciales();
+  cargarDatosIniciales();
 }, []);
 
   const agregarProducto = (producto) => {
@@ -277,8 +296,189 @@ export default function App() {
     setMetodoPago('');
     setMontoRecibido('');
   };
+const guardarComoPendiente = async () => {
+  if (pedido.length === 0) {
+    alert('El pedido está vacío');
+    return;
+  }
+
+  try {
+    // Obtener el próximo número de orden
+    const nuevaOrden = obtenerProximoNumeroOrdenTotal(ventas, ordenesPendientes);
+    const ahora = new Date();
+    
+    // Crear objeto de orden pendiente
+    const ordenPendiente = {
+      numeroOrden: nuevaOrden,
+      estado: 'pendiente',
+      fecha: ahora.toISOString().split('T')[0],
+      hora: ahora.toTimeString().split(' ')[0],
+      
+      // Estructura de items agregados
+      itemsAgregados: [
+        {
+          timestamp: ahora.toTimeString().split(' ')[0],
+          productos: pedido.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            precio: item.precio,
+            cantidad: item.cantidad
+          })),
+          subtotal: calcularTotal()
+        }
+      ],
+      
+      total: calcularTotal(),
+      cantidadProductos: pedido.reduce((sum, item) => sum + item.cantidad, 0),
+      
+      // Campos de pago (se llenarán cuando se pague)
+      metodoPago: null,
+      montoRecibido: null,
+      cambio: null,
+      fechaPago: null,
+      horaPago: null
+    };
+
+    // Guardar en Firebase
+    await guardarOrdenPendiente(ordenPendiente);
+
+    // Actualizar estado local
+    const pendientesActualizadas = await obtenerOrdenesPendientes();
+    setOrdenesPendientes(pendientesActualizadas);
+    
+    // Mostrar confirmación
+    setNumeroOrdenPendiente(nuevaOrden);
+    setMostrarConfirmacionPendiente(true);
+
+    // Limpiar pedido después de 2 segundos
+    setTimeout(() => {
+      setMostrarConfirmacionPendiente(false);
+      setPedido([]);
+      setNumeroOrdenPendiente(null);
+    }, 2000);
+
+    console.log('✅ Orden guardada como pendiente:', nuevaOrden);
+  } catch (error) {
+    console.error('❌ Error al guardar orden pendiente:', error);
+    alert('Hubo un error al guardar la orden. Por favor, intenta de nuevo.');
+  }
+};
+  // FASE 3: Abrir detalle de orden pendiente
+  const abrirDetalleOrden = (orden) => {
+  setOrdenSeleccionada(orden);
+  setMostrarDetalleOrden(true);
+  };
+
+// FASE 3: Cerrar modal de detalle
+  const cerrarDetalleOrden = () => {
+  setOrdenSeleccionada(null);
+  setMostrarDetalleOrden(false);
+  setModoAgregarProductos(false);
+  setProductosTemporales([]);
+  };
+
+  // FASE 3: Iniciar modo de agregar productos a orden existente
+  const iniciarAgregarProductos = () => {
+  setModoAgregarProductos(true);
+  setProductosTemporales([]);
+  setVistaActual('pedidos');
+  setMostrarDetalleOrden(false);
+  };
+
+// FASE 3: Agregar producto al carrito temporal
+  const agregarProductoTemporal = (producto) => {
+  const productoExistente = productosTemporales.find(p => p.id === producto.id);
+  
+  if (productoExistente) {
+    setProductosTemporales(productosTemporales.map(p =>
+      p.id === producto.id 
+        ? { ...p, cantidad: p.cantidad + 1 }
+        : p
+    ));
+  } else {
+    setProductosTemporales([...productosTemporales, { ...producto, cantidad: 1 }]);
+  }
+  };
+
+// FASE 3: Quitar producto del carrito temporal
+  const quitarProductoTemporal = (productoId) => {
+  const producto = productosTemporales.find(p => p.id === productoId);
+  
+  if (producto.cantidad > 1) {
+    setProductosTemporales(productosTemporales.map(p =>
+      p.id === productoId
+        ? { ...p, cantidad: p.cantidad - 1 }
+        : p
+    ));
+  } else {
+    setProductosTemporales(productosTemporales.filter(p => p.id !== productoId));
+  }
+  };
+
+// FASE 3: Cancelar agregar productos
+  const cancelarAgregarProductos = () => {
+  setModoAgregarProductos(false);
+  setProductosTemporales([]);
+  setVistaActual('pendientes');
+  };
+
+  // FASE 3: Confirmar productos agregados a la orden
+const confirmarProductosAgregados = async () => {
+  if (productosTemporales.length === 0) {
+    alert('Debes agregar al menos un producto');
+    return;
+  }
+
+  try {
+    const productosActualizados = [...ordenSeleccionada.productos];
+    
+    productosTemporales.forEach(nuevoProducto => {
+      const existente = productosActualizados.find(p => p.id === nuevoProducto.id);
+      
+      if (existente) {
+        existente.cantidad += nuevoProducto.cantidad;
+      } else {
+        productosActualizados.push(nuevoProducto);
+      }
+    });
+
+    const nuevoTotal = productosActualizados.reduce((sum, p) => 
+      sum + (p.precio * p.cantidad), 0
+    );
+
+    const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
+    await updateDoc(ordenRef, {
+      productos: productosActualizados,
+      total: nuevoTotal,
+      ultimaActualizacion: Timestamp.now()
+    });
+
+    const pendientesActualizadas = await obtenerOrdenesPendientes();
+    setOrdenesPendientes(pendientesActualizadas);
+
+    setModoAgregarProductos(false);
+    setProductosTemporales([]);
+    setVistaActual('pendientes');
+    alert('✅ Productos agregados exitosamente');
+
+  } catch (error) {
+    console.error('Error al agregar productos:', error);
+    alert('❌ Error al agregar productos');
+  }
+};
+
+  // FASE 3: Procesar pago de orden pendiente
+  const procesarPagoPendiente = (orden) => {
+  setPedido(orden.productos);
+  setOrdenSeleccionada(orden);
+  setMostrarDetalleOrden(false);
+  setMostrarPago(true);
+  };
 
   const confirmarPago = async () => {
+  // FASE 3: Detectar si es pago de orden pendiente
+  const esPagoPendiente = ordenSeleccionada !== null;
+  
   // Validaciones existentes
   if (metodoPago === 'efectivo') {
     const cambio = calcularCambio();
@@ -290,11 +490,13 @@ export default function App() {
 
   try {
     // Preparar el objeto de venta
-    const nuevaOrden = obtenerProximoNumeroOrdenFirebase(ventas);
+    const nuevaOrden = esPagoPendiente 
+    ? ordenSeleccionada.numeroOrden 
+    : obtenerProximoNumeroOrdenFirebase(ventas);
     const ahora = new Date();
     
     const venta = {
-      id: `venta-${Date.now()}`,
+      id: esPagoPendiente ? ordenSeleccionada.id : `venta-${Date.now()}`,
       numeroOrden: nuevaOrden,
       fecha: ahora.toISOString().split('T')[0],
       hora: ahora.toTimeString().split(' ')[0],
@@ -312,6 +514,21 @@ export default function App() {
 
     // Guardar en Firebase
     await guardarVentaFirebase(venta);
+    // FASE 3: Si es pendiente, marcarla como pagada
+    if (esPagoPendiente) {
+      const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
+      await updateDoc(ordenRef, {
+        estado: 'pagada',
+        metodoPago: metodoPago,
+        montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
+        cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
+        fechaPago: venta.fecha,
+        horaPago: venta.hora
+      });
+
+      const pendientesActualizadas = await obtenerOrdenesPendientes();
+      setOrdenesPendientes(pendientesActualizadas);
+    }
 
     // Actualizar el estado local
     const ventasActualizadas = await obtenerVentasFirebase();
@@ -330,6 +547,7 @@ export default function App() {
       setMetodoPago('');
       setMontoRecibido('');
       setNumeroOrden(null);
+      setOrdenSeleccionada(null);
     }, 3000);
 
   } catch (error) {
@@ -441,7 +659,36 @@ export default function App() {
       topProductos
     };
   };
+  // FASE 3: Solicitar cancelación de orden
+const solicitarCancelarOrden = (orden) => {
+  setOrdenSeleccionada(orden);
+  setMostrarConfirmacionCancelar(true);
+};
 
+// FASE 3: Cancelar orden pendiente
+const cancelarOrdenPendiente = async () => {
+  try {
+    const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
+    await updateDoc(ordenRef, {
+      estado: 'cancelada',
+      fechaCancelacion: new Date().toISOString().split('T')[0],
+      horaCancelacion: new Date().toTimeString().split(' ')[0]
+    });
+
+    const pendientesActualizadas = await obtenerOrdenesPendientes();
+    setOrdenesPendientes(pendientesActualizadas);
+
+    setMostrarConfirmacionCancelar(false);
+    setMostrarDetalleOrden(false);
+    setOrdenSeleccionada(null);
+
+    alert('✅ Orden cancelada');
+
+  } catch (error) {
+    console.error('Error al cancelar orden:', error);
+    alert('❌ Error al cancelar orden');
+  }
+    };
   const ventasFiltradas = filtrarVentas();
   const estadisticas = calcularEstadisticas();
   // Mostrar pantalla de carga mientras se obtienen las ventas
@@ -514,6 +761,12 @@ if (error) {
                 >
                   📋 Historial
                 </button>
+                <button 
+                  className="btn-pendientes"
+                  onClick={() => setVistaActual('pendientes')}
+                >
+                  🧾 Pendientes {ordenesPendientes.length > 0 && `(${ordenesPendientes.length})`}
+                </button>
                 <div className="stats-badge">
                   <span className="stats-label">Ventas totales:</span>
                   <span className="stats-number">{totalVentas}</span>
@@ -534,7 +787,9 @@ if (error) {
               </button>
             ))}
           </div>
+//empieza
 
+//termina
           <div className="productos-container">
             <div className="productos-grid">
               {ProductosMenu[categoriaActiva].map(producto => (
@@ -629,17 +884,28 @@ if (error) {
                 {formatearPrecio(calcularTotal())}
               </span>
             </div>
-            
-            <button
-              disabled={pedido.length === 0}
-              className="btn-pagar"
-              onClick={abrirPantallaPago}
-            >
-              Ir a Pagar
-            </button>
-            
-            <p className="fase-label">Fase 6: Exportación de Datos</p>
-          </div>
+  
+            <div className="pedido-footer-botones">
+              <button
+                disabled={pedido.length === 0}
+                className="btn-pendiente"
+                onClick={guardarComoPendiente}
+                title="Guardar orden para pagar después"
+              >
+                📝 Guardar Pendiente
+              </button>
+    
+              <button
+                disabled={pedido.length === 0}
+                className="btn-pagar"
+                onClick={abrirPantallaPago}
+              >
+                💳 Pagar Ahora
+              </button>
+            </div>
+  
+            <p className="fase-label">Sistema de Órdenes Pendientes</p>
+        </div>
         </div>
 
         {mostrarPago && (
@@ -785,6 +1051,21 @@ if (error) {
                 <div className="pago-exitoso">
                   <div className="check-animation">✓</div>
                   <h2>¡Pago Exitoso!</h2>
+                  {mostrarConfirmacionPendiente && (
+                    <div className="modal-overlay">
+                      <div className="modal-confirmacion-pendiente">
+                        <div className="icono-pendiente">📝</div>
+                          <h2>¡Orden Guardada!</h2>
+                            <p className="numero-orden-pendiente">Orden #{numeroOrdenPendiente}</p>
+                            <p className="mensaje-pendiente">
+                            La orden ha sido guardada como pendiente
+                            </p>
+                            <p className="submensaje-pendiente">
+                            Puedes agregar más productos o procesarla desde "Pendientes"
+                            </p>
+                          </div>
+                        </div>
+)}
                   <p className="numero-orden">Orden #{numeroOrden}</p>
                   <p className="mensaje-exito">El pedido ha sido procesado y guardado correctamente</p>
                 </div>
@@ -927,7 +1208,167 @@ if (error) {
       </div>
     );
   }
+if (vistaActual === 'pendientes') {
+    return (
+      <div className="app-container pendientes-view">
+        <div className="pendientes-container">
+          <div className="pendientes-header">
+            <div className="pendientes-header-top">
+              <h1>🧾 Órdenes Pendientes</h1>
+              <button 
+                className="btn-volver"
+                onClick={() => setVistaActual('pedidos')}
+              >
+                ← Volver a Pedidos
+              </button>
+            </div>
 
+            <div className="pendientes-stats">
+              <div className="stat-pendiente">
+                <span className="stat-pendiente-label">Total pendientes</span>
+                <span className="stat-pendiente-valor">{ordenesPendientes.length}</span>
+              </div>
+              <div className="stat-pendiente">
+                <span className="stat-pendiente-label">Monto total</span>
+                <span className="stat-pendiente-valor">
+                  {formatearPrecio(ordenesPendientes.reduce((sum, o) => sum + o.total, 0))}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pendientes-contenido">
+            {ordenesPendientes.length === 0 ? (
+              <div className="pendientes-vacio">
+                <div className="icono-vacio">🧾</div>
+                <p>No hay órdenes pendientes</p>
+                <p className="texto-small">Las órdenes que guardes aparecerán aquí</p>
+                <button 
+                  className="btn-crear-orden"
+                  onClick={() => setVistaActual('pedidos')}
+                >
+                  + Crear Nueva Orden
+                </button>
+              </div>
+            ) : (
+              <div className="pendientes-grid">
+                {ordenesPendientes.map(orden => {
+                  // Calcular tiempo transcurrido
+                  const fechaCreacion = orden.fechaCreacion?.toDate() || new Date();
+                  const ahora = new Date();
+                  const minutosTranscurridos = Math.floor((ahora - fechaCreacion) / 1000 / 60);
+                  
+                  // Determinar color según tiempo
+                  let tiempoClase = 'tiempo-reciente';
+                  if (minutosTranscurridos > 60) tiempoClase = 'tiempo-antiguo';
+                  else if (minutosTranscurridos > 30) tiempoClase = 'tiempo-medio';
+
+                  return (
+                    <div key={orden.firebaseId} className="orden-pendiente-card">
+                      <div className="orden-pendiente-header">
+                        <div className="orden-numero">
+                          <span className="orden-label">Orden</span>
+                          <span className="orden-numero-valor">#{orden.numeroOrden}</span>
+                        </div>
+                        <div className={`orden-tiempo ${tiempoClase}`}>
+                          <span className="icono-reloj">🕐</span>
+                          <span>
+                            {minutosTranscurridos < 60 
+                              ? `${minutosTranscurridos} min` 
+                              : `${Math.floor(minutosTranscurridos / 60)}h ${minutosTranscurridos % 60}m`
+                            }
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="orden-pendiente-info">
+                        <div className="orden-detalle">
+                          <span className="detalle-icono">🍽️</span>
+                          <span>{orden.cantidadProductos} producto(s)</span>
+                        </div>
+                        <div className="orden-detalle">
+                          <span className="detalle-icono">📅</span>
+                          <span>{orden.hora}</span>
+                        </div>
+                      </div>
+
+                      <div className="orden-pendiente-productos">
+                        {orden.itemsAgregados && orden.itemsAgregados.map((grupo, idx) => (
+                          <div key={idx} className="grupo-productos">
+                            {grupo.productos.slice(0, 3).map((prod, pIdx) => (
+                              <div key={pIdx} className="producto-mini">
+                                <span className="producto-mini-cantidad">{prod.cantidad}x</span>
+                                <span className="producto-mini-nombre">{prod.nombre}</span>
+                              </div>
+                            ))}
+                            {grupo.productos.length > 3 && (
+                              <div className="producto-mini-mas">
+                                +{grupo.productos.length - 3} más
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="orden-pendiente-total">
+                        <span className="total-label-pendiente">Total</span>
+                        <span className="total-valor-pendiente">
+                          {formatearPrecio(orden.total)}
+                        </span>
+                      </div>
+
+                      <div className="orden-acciones">
+                        <button 
+                          className="btn-detalle"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            abrirDetalleOrden(orden);
+                          }}
+                        >
+                          👁️ Ver Detalle
+                        </button>
+  
+                        <button 
+                          className="btn-agregar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOrdenSeleccionada(orden);
+                            iniciarAgregarProductos();
+                          }}
+                        >
+                          ➕ Agregar
+                        </button>
+  
+                        <button 
+                          className="btn-pagar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            procesarPagoPendiente(orden);
+                          }}
+                        >
+                          💳 Pagar
+                        </button>
+  
+                        <button 
+                          className="btn-cancelar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            solicitarCancelarOrden(orden);
+                          }}
+                        >
+                          ❌ Cancelar
+                        </button>
+                        </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="app-container historial-view">
       <div className="historial-container">
@@ -1114,6 +1555,98 @@ if (error) {
           </div>
         </div>
       )}
+      {/* FASE 3: Modal de Detalle de Orden */}
+{mostrarDetalleOrden && ordenSeleccionada && (
+  <div className="modal-overlay" onClick={cerrarDetalleOrden}>
+    <div className="modal-detalle-orden" onClick={(e) => e.stopPropagation()}>
+      
+      {/* Header */}
+      <div className="modal-detalle-header">
+        <h2>📋 Orden #{ordenSeleccionada.numeroOrden}</h2>
+        <button className="btn-cerrar-modal" onClick={cerrarDetalleOrden}>✕</button>
+      </div>
+
+      {/* Información */}
+      <div className="modal-detalle-info">
+        <div className="info-item">
+          <span className="info-label">📅 Fecha:</span>
+          <span>{ordenSeleccionada.fecha}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">🕐 Hora:</span>
+          <span>{ordenSeleccionada.hora}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">⏱️ Tiempo:</span>
+          <span>
+            {(() => {
+              const ahora = new Date();
+              const creacion = ordenSeleccionada.fechaCreacion?.toDate() || new Date();
+              const diffMs = ahora - creacion;
+              const diffMins = Math.floor(diffMs / 60000);
+              if (diffMins < 60) return `${diffMins} min`;
+              const diffHours = Math.floor(diffMins / 60);
+              return `${diffHours}h ${diffMins % 60}m`;
+            })()}
+          </span>
+        </div>
+      </div>
+
+      {/* Productos */}
+      <div className="modal-detalle-productos">
+        <h3>Productos:</h3>
+        {ordenSeleccionada.productos.map((prod, index) => (
+          <div key={index} className="detalle-producto-item">
+            <span className="prod-cantidad">{prod.cantidad}x</span>
+            <span className="prod-nombre">{prod.nombre}</span>
+            <span className="prod-precio">
+              ${((prod.precio * prod.cantidad) / 1000).toFixed(1)}k
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Total */}
+      <div className="modal-detalle-total">
+        <span>TOTAL:</span>
+        <span className="total-valor">
+          ${(ordenSeleccionada.total / 1000).toFixed(1)}k
+        </span>
+      </div>
+
+      {/* Acciones */}
+      <div className="modal-detalle-acciones">
+        <button 
+          className="btn-modal-agregar"
+          onClick={() => {
+            setMostrarDetalleOrden(false);
+            iniciarAgregarProductos();
+          }}
+        >
+          ➕ Agregar Productos
+        </button>
+        
+        <button 
+          className="btn-modal-pagar"
+          onClick={() => procesarPagoPendiente(ordenSeleccionada)}
+        >
+          💳 Procesar Pago
+        </button>
+        
+        <button 
+          className="btn-modal-cancelar"
+          onClick={() => {
+            setMostrarDetalleOrden(false);
+            solicitarCancelarOrden(ordenSeleccionada);
+          }}
+        >
+          ❌ Cancelar Orden
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
     </div>
   );
 }
