@@ -1501,11 +1501,10 @@ const guardarComoPendiente = async () => {
                               </div>
                             )}
                           </>
-  ) : (
-    <div className="producto-mini-mas">Sin productos</div>
-  )}
-</div>
-
+                          ) : (
+                      <div className="producto-mini-mas">Sin productos</div>
+                      )}
+                      </div>
                       <div className="orden-pendiente-total">
                         <span className="total-label-pendiente">Total</span>
                         <span className="total-valor-pendiente">
