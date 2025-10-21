@@ -14,6 +14,9 @@ import {
 } from './firebasePendientes';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { verificarPINSeguro, TIEMPO_SESION_MS } from './pinConfig';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { db } from './firebase';
 const ProductosMenu = {
   empanadas: [
     { id: 'e1', nombre: 'Arroz pollo', precio: 3000, descripcion: 'Empanada con arroz y pollo' },
@@ -180,6 +183,13 @@ export default function App() {
   const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
   const [mostrarConfirmacionPendiente, setMostrarConfirmacionPendiente] = useState(false);
   const [numeroOrdenPendiente, setNumeroOrdenPendiente] = useState(null);
+  // Estados para sistema de PIN
+  const [mostrarModalPIN, setMostrarModalPIN] = useState(false);
+  const [pinIngresado, setPinIngresado] = useState('');
+  const [accionProtegida, setAccionProtegida] = useState(null);
+  const [pinIncorrecto, setPinIncorrecto] = useState(false);
+  const [autenticado, setAutenticado] = useState(false);
+  const [tiempoAutenticacion, setTiempoAutenticacion] = useState(null);
 
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
@@ -219,6 +229,87 @@ export default function App() {
 
     cargarDatosIniciales();
   }, []);
+  // Verificar si la sesión sigue activa
+  const sesionActiva = () => {
+    if (!autenticado || !tiempoAutenticacion) return false;
+    const ahora = new Date().getTime();
+    return (ahora - tiempoAutenticacion) < TIEMPO_SESION_MS;
+  };
+
+  // Solicitar PIN para acciones protegidas
+  const solicitarPIN = (accion) => {
+    if (sesionActiva()) {
+      setVistaActual(accion);
+      return;
+    }
+    setAccionProtegida(accion);
+    setMostrarModalPIN(true);
+    setPinIngresado('');
+    setPinIncorrecto(false);
+  };
+
+  // Agregar dígito al PIN
+  const agregarDigitoPIN = (digito) => {
+    if (pinIngresado.length < 4) {
+      setPinIngresado(pinIngresado + digito);
+    }
+  };
+
+  // Borrar último dígito
+  const borrarDigitoPIN = () => {
+    setPinIngresado(pinIngresado.slice(0, -1));
+  };
+
+  // Verificar PIN ingresado
+  const verificarPIN = () => {
+    if (verificarPINSeguro(pinIngresado)) {
+      setAutenticado(true);
+      setTiempoAutenticacion(new Date().getTime());
+      setPinIncorrecto(false);
+      setMostrarModalPIN(false);
+      setVistaActual(accionProtegida);
+      setPinIngresado('');
+      setAccionProtegida(null);
+    } else {
+      setPinIncorrecto(true);
+      setPinIngresado('');
+      setTimeout(() => setPinIncorrecto(false), 2000);
+    }
+  };
+
+  // Cerrar modal de PIN
+  const cerrarModalPIN = () => {
+    setMostrarModalPIN(false);
+    setPinIngresado('');
+    setPinIncorrecto(false);
+    setAccionProtegida(null);
+  };
+
+  // Filtrar ventas de últimas 24 horas
+  const filtrarVentasUltimas24h = () => {
+    const ahora = new Date();
+    const hace24h = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
+    
+    return ventas.filter(venta => {
+      const fechaVenta = new Date(venta.fecha + 'T' + venta.hora);
+      return fechaVenta >= hace24h;
+    });
+  };
+
+  // useEffect para cerrar sesión automáticamente
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      if (autenticado && !sesionActiva()) {
+        setAutenticado(false);
+        setTiempoAutenticacion(null);
+        if (vistaActual === 'reportes' || vistaActual === 'historial') {
+          setVistaActual('pedidos');
+          alert('⏱️ Sesión expirada. Por favor ingrese el PIN nuevamente.');
+        }
+      }
+    }, 60000);
+    return () => clearInterval(intervalo);
+  }, [autenticado, tiempoAutenticacion, vistaActual]);
   // ========================================
   // FUNCIONES DE MANEJO DE PEDIDOS
   // ========================================
@@ -766,15 +857,15 @@ const guardarComoPendiente = async () => {
               <div className="header-actions">
                 <button 
                   className="btn-reportes"
-                  onClick={() => setVistaActual('reportes')}
+                  onClick={() => solicitarPIN('reportes')}
                 >
-                  📊 Reportes
+                  {sesionActiva() ? '📊 Reportes' : '🔒 Reportes'}
                 </button>
                 <button 
                   className="btn-historial"
-                  onClick={() => setVistaActual('historial')}
+                  onClick={() => solicitarPIN('historial')}
                 >
-                  📋 Historial
+                  {sesionActiva() ? '📋 Historial' : '🔒 Historial'}
                 </button>
                 <button 
                   className="btn-pendientes"
@@ -782,6 +873,19 @@ const guardarComoPendiente = async () => {
                 >
                   🧾 Pendientes {ordenesPendientes.length > 0 && `(${ordenesPendientes.length})`}
                 </button>
+                {sesionActiva() && (
+                  <button 
+                    className="btn-cerrar-sesion"
+                    onClick={() => {
+                      setAutenticado(false);
+                      setTiempoAutenticacion(null);
+                      setVistaActual('pedidos');
+                    }}
+                    title="Cerrar sesión (30 min)"
+                  >
+                    🔓 Cerrar Sesión
+                  </button>
+                )}
                 <div className="stats-badge">
                   <span className="stats-label">Ventas totales:</span>
                   <span className="stats-number">{totalVentas}</span>
@@ -1593,13 +1697,25 @@ const guardarComoPendiente = async () => {
   // ========================================
   // VISTA: HISTORIAL DE VENTAS
   // ========================================
-
+// Determinar si mostrar todas las ventas o solo últimas 24h
+  const ventasMostrar = sesionActiva() ? ventasFiltradas : filtrarVentasUltimas24h();
   return (
     <div className="app-container historial-view">
       <div className="historial-container">
         <div className="historial-header">
           <div className="historial-header-top">
             <h1>📋 Historial de Ventas</h1>
+            {!sesionActiva() && (
+                <p className="historial-limitado-texto">
+                  🕐 Mostrando solo últimas 24 horas. 
+                  <button 
+                    className="btn-ver-completo"
+                    onClick={() => solicitarPIN('historial')}
+                  >
+                    Ver historial completo
+                  </button>
+                </p>
+              )}
             <div className="historial-header-actions">
               <button 
                 className="btn-exportar"
@@ -1678,18 +1794,18 @@ const guardarComoPendiente = async () => {
               <div className="historial-stats">
                 <div className="stat-card">
                   <span className="stat-label">Ventas encontradas</span>
-                  <span className="stat-valor">{ventasFiltradas.length}</span>
+                  <span className="stat-valor">{ventasMostrar.length}</span>
                 </div>
                 <div className="stat-card">
                   <span className="stat-label">Total vendido</span>
                   <span className="stat-valor">
-                    {formatearPrecio(ventasFiltradas.reduce((sum, v) => sum + v.total, 0))}
+                    {formatearPrecio(ventasMostrar.reduce((sum, v) => sum + v.total, 0))}
                   </span>
                 </div>
               </div>
 
               <div className="ventas-lista">
-                {ventasFiltradas.map(venta => (
+                {ventasMostrar.map(venta => (
                   <div 
                     key={venta.id} 
                     className="venta-card"
@@ -1781,6 +1897,73 @@ const guardarComoPendiente = async () => {
           </div>
         </div>
       )}
-    </div>
+      {/* Modal de PIN */}
+      {mostrarModalPIN && (
+        <div className="modal-overlay">
+          <div className="modal-pin">
+            <div className="modal-pin-header">
+              <h2>🔒 Ingrese PIN</h2>
+              <button onClick={cerrarModalPIN} className="btn-cerrar">✕</button>
+            </div>
+
+            <div className="modal-pin-body">
+              <p className="pin-descripcion">
+                {accionProtegida === 'reportes' 
+                  ? 'Acceso a reportes y estadísticas' 
+                  : 'Acceso a historial completo'}
+              </p>
+
+              <div className="pin-display">
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} className={`pin-dot ${pinIngresado.length > i ? 'filled' : ''}`}>
+                    {pinIngresado.length > i ? '●' : '○'}
+                  </div>
+                ))}
+              </div>
+
+              {pinIncorrecto && (
+                <div className="pin-error">
+                  ❌ PIN incorrecto. Intente nuevamente.
+                </div>
+              )}
+
+              <div className="pin-teclado">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                  <button
+                    key={num}
+                    className="pin-tecla"
+                    onClick={() => agregarDigitoPIN(num.toString())}
+                  >
+                    {num}
+                  </button>
+                ))}
+                
+                <button
+                  className="pin-tecla pin-tecla-borrar"
+                  onClick={borrarDigitoPIN}
+                >
+                  ⌫
+                </button>
+                
+                <button
+                  className="pin-tecla"
+                  onClick={() => agregarDigitoPIN('0')}
+                >
+                  0
+                </button>
+                
+                <button
+                  className="pin-tecla pin-tecla-confirmar"
+                  onClick={verificarPIN}
+                  disabled={pinIngresado.length !== 4}
+                >
+                  ✓
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div> 
   );
 }

@@ -3050,3 +3050,222 @@
 .modal-detalle-orden::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+/* ============================================
+   SISTEMA DE AUTENTICACIÓN PIN
+   ============================================ */
+
+/* Botón cerrar sesión */
+.btn-cerrar-sesion {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cerrar-sesion:hover {
+  background: #4b5563;
+  transform: translateY(-2px);
+}
+
+/* Texto de historial limitado */
+.historial-limitado-texto {
+  color: #f59e0b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-ver-completo {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-ver-completo:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Modal de PIN */
+.modal-pin {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.modal-pin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 30px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.modal-pin-header h2 {
+  font-size: 1.75rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.modal-pin-body {
+  padding: 35px 30px;
+  text-align: center;
+}
+
+.pin-descripcion {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
+/* Display del PIN */
+.pin-display {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.pin-dot {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #d1d5db;
+  transition: all 0.3s;
+  background: #f9fafb;
+}
+
+.pin-dot.filled {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Mensaje de error */
+.pin-error {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Teclado numérico */
+.pin-teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.pin-tecla {
+  width: 100%;
+  height: 70px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 12px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pin-tecla:hover:not(:disabled) {
+  background: #f3f4f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pin-tecla:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pin-tecla-borrar {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.pin-tecla-borrar:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.pin-tecla-confirmar {
+  background: #dcfce7;
+  color: #16a34a;
+  border-color: #86efac;
+}
+
+.pin-tecla-confirmar:hover:not(:disabled) {
+  background: #86efac;
+}
+
+.pin-tecla:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-pin {
+    width: 95%;
+  }
+  
+  .pin-display {
+    gap: 15px;
+  }
+  
+  .pin-dot {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .pin-teclado {
+    gap: 10px;
+  }
+  
+  .pin-tecla {
+    height: 60px;
+    font-size: 1.5rem;
+  }
+}
