@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { 
+  guardarVentaFirebase, 
+  obtenerVentasFirebase,
+  obtenerProximoNumeroOrdenFirebase 
+} from './firebaseService';
 
 const ProductosMenu = {
   empanadas: [
@@ -7,8 +12,8 @@ const ProductosMenu = {
     { id: 'e2', nombre: 'Arroz carne', precio: 3000, descripcion: 'Empanada con arroz y carne' },
     { id: 'e3', nombre: 'Papa carne', precio: 3000, descripcion: 'Empanada con papa y carne' },
     { id: 'e4', nombre: 'Pizza', precio: 3500, descripcion: 'Empanada con queso, tocineta y maiz' },
-    { id: 'e5', nombre: 'Pollo champiñon', precio: 20000, descripcion: 'Empanada con champiñon y pollo' },
-    { id: 'e6', nombre: 'Papa carne/pollo', precio: 20000, descripcion: 'Papa rellena de carne o pollo desmechado' }
+    { id: 'e5', nombre: 'Pollo champiñon', precio: 4000, descripcion: 'Empanada con champiñon y pollo' },
+    { id: 'e6', nombre: 'Papa carne/pollo', precio: 4500, descripcion: 'Papa rellena de carne o pollo desmechado' }
   ],
   perros: [
     { id: 'p1', nombre: 'Perro Caliente', precio: 14500, descripcion: 'Salchicha americana, tocineta, queso, papa chip y cebolla caramelizada' },
@@ -48,25 +53,6 @@ const ProductosMenu = {
   ]
 };
 
-const obtenerVentas = () => {
-  const ventasGuardadas = localStorage.getItem('ventas-delicias-colette');
-  return ventasGuardadas ? JSON.parse(ventasGuardadas) : [];
-};
-
-const guardarVenta = (venta) => {
-  const ventas = obtenerVentas();
-  ventas.push(venta);
-  localStorage.setItem('ventas-delicias-colette', JSON.stringify(ventas));
-  console.log('✅ Venta guardada:', venta);
-};
-
-const obtenerProximoNumeroOrden = () => {
-  const ventas = obtenerVentas();
-  if (ventas.length === 0) return 1000;
-  const ultimaOrden = Math.max(...ventas.map(v => v.numeroOrden));
-  return ultimaOrden + 1;
-};
-
 // Función para exportar a CSV
 const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
   if (ventas.length === 0) {
@@ -76,12 +62,12 @@ const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
 
   // Crear encabezados
   const encabezados = [
-    'Número de Orden',
+    'Numero de Orden',
     'Fecha',
     'Hora',
     'Productos',
     'Cantidades',
-    'Método de Pago',
+    'Metodo de Pago',
     'Monto Recibido',
     'Cambio',
     'Total'
@@ -105,8 +91,9 @@ const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
     ];
   });
 
-  // Construir CSV
-  let csvContent = encabezados.join(',') + '\n';
+  // Construir CSV con BOM para UTF-8
+  const BOM = '\uFEFF';
+  let csvContent = BOM + encabezados.join(',') + '\n';
   filas.forEach(fila => {
     csvContent += fila.join(',') + '\n';
   });
@@ -130,21 +117,20 @@ const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
 
 // Función para exportar reporte resumido
 const exportarReporteCSV = (estadisticas, periodo) => {
-  const encabezados = ['Métrica', 'Valor'];
+  const encabezados = ['Metrica', 'Valor'];
   
   const filas = [
-    ['Período', periodo],
+    ['Periodo', periodo],
     ['Total Vendido', estadisticas.totalVendido],
-    ['Número de Órdenes', estadisticas.numeroOrdenes],
+    ['Numero de Ordenes', estadisticas.numeroOrdenes],
     ['Promedio por Venta', estadisticas.promedioVenta.toFixed(0)],
     ['Total Efectivo', estadisticas.totalEfectivo],
-    ['Total Transferencia', estadisticas.totalTransferencia],
-    [''],
-    ['Top Productos', 'Cantidad'],
-    ...estadisticas.topProductos.map(p => [p.nombre, p.cantidad])
+    ['Total Transferencia', estadisticas.totalTransferencia]
   ];
 
-  let csvContent = encabezados.join(',') + '\n';
+  // Construir CSV con BOM para UTF-8
+  const BOM = '\uFEFF';
+  let csvContent = BOM + encabezados.join(',') + '\n';
   filas.forEach(fila => {
     csvContent += fila.join(',') + '\n';
   });
@@ -180,6 +166,16 @@ export default function App() {
   const [busquedaOrden, setBusquedaOrden] = useState('');
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [periodoReporte, setPeriodoReporte] = useState('todo');
+  const agregarBillete = (valor) => {
+    const montoActual = parseFloat(montoRecibido) || 0;
+    const nuevoMonto = montoActual + valor;
+    setMontoRecibido(nuevoMonto.toString());
+  };
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const limpiarMontoRecibido = () => {
+    setMontoRecibido('');
+  };
 
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
@@ -191,11 +187,28 @@ export default function App() {
     { id: 'bebidas', nombre: 'Bebidas', icon: '🥤' }
   ];
 
+  // Cargar ventas desde Firebase al iniciar
   useEffect(() => {
-    const ventasGuardadas = obtenerVentas();
-    setVentas(ventasGuardadas);
-    setTotalVentas(ventasGuardadas.length);
-  }, []);
+  const cargarVentasIniciales = async () => {
+    try {
+      setCargando(true);
+      setError(null);
+      
+      const ventasFirebase = await obtenerVentasFirebase();
+      setVentas(ventasFirebase);
+      setTotalVentas(ventasFirebase.length);
+      
+      console.log('✅ Ventas cargadas desde Firebase');
+    } catch (error) {
+      console.error('❌ Error al cargar ventas:', error);
+      setError('No se pudieron cargar las ventas. Intenta recargar la página.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  cargarVentasIniciales();
+}, []);
 
   const agregarProducto = (producto) => {
     const existe = pedido.find(item => item.id === producto.id);
@@ -265,17 +278,21 @@ export default function App() {
     setMontoRecibido('');
   };
 
-  const confirmarPago = () => {
-    if (metodoPago === 'efectivo') {
-      const cambio = calcularCambio();
-      if (cambio < 0) {
-        alert('El monto recibido es menor al total');
-        return;
-      }
+  const confirmarPago = async () => {
+  // Validaciones existentes
+  if (metodoPago === 'efectivo') {
+    const cambio = calcularCambio();
+    if (cambio < 0) {
+      alert('El monto recibido es menor al total');
+      return;
     }
+  }
 
-    const nuevaOrden = obtenerProximoNumeroOrden();
+  try {
+    // Preparar el objeto de venta
+    const nuevaOrden = obtenerProximoNumeroOrdenFirebase(ventas);
     const ahora = new Date();
+    
     const venta = {
       id: `venta-${Date.now()}`,
       numeroOrden: nuevaOrden,
@@ -293,13 +310,19 @@ export default function App() {
       total: calcularTotal()
     };
 
-    guardarVenta(venta);
-    const ventasActualizadas = obtenerVentas();
+    // Guardar en Firebase
+    await guardarVentaFirebase(venta);
+
+    // Actualizar el estado local
+    const ventasActualizadas = await obtenerVentasFirebase();
     setVentas(ventasActualizadas);
     setTotalVentas(ventasActualizadas.length);
+    
+    // Mostrar éxito
     setNumeroOrden(nuevaOrden);
     setPagoExitoso(true);
 
+    // Limpiar después de 3 segundos
     setTimeout(() => {
       setPagoExitoso(false);
       setMostrarPago(false);
@@ -308,7 +331,12 @@ export default function App() {
       setMontoRecibido('');
       setNumeroOrden(null);
     }, 3000);
-  };
+
+  } catch (error) {
+    console.error('❌ Error al procesar el pago:', error);
+    alert('Hubo un error al guardar la venta. Por favor, intenta de nuevo.');
+  }
+};
 
   const filtrarVentas = () => {
     let ventasFiltradas = [...ventas];
@@ -416,6 +444,53 @@ export default function App() {
 
   const ventasFiltradas = filtrarVentas();
   const estadisticas = calcularEstadisticas();
+  // Mostrar pantalla de carga mientras se obtienen las ventas
+if (cargando) {
+  return (
+    <div className="app-container" style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      flexDirection: 'column',
+      gap: '20px'
+    }}>
+      <div style={{
+        fontSize: '4rem',
+        animation: 'spin 1s linear infinite'
+      }}>⏳</div>
+      <h2>Cargando sistema POS...</h2>
+      <p style={{ color: '#6b7280' }}>Conectando con Firebase</p>
+    </div>
+  );
+}
+
+// Mostrar error si no se pudieron cargar las ventas
+if (error) {
+  return (
+    <div className="app-container" style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      flexDirection: 'column',
+      gap: '20px'
+    }}>
+      <div style={{ fontSize: '4rem' }}>⚠️</div>
+      <h2>Error al cargar datos</h2>
+      <p style={{ color: '#dc2626', textAlign: 'center', maxWidth: '500px' }}>
+        {error}
+      </p>
+      <button 
+        className="btn-pagar"
+        onClick={() => window.location.reload()}
+        style={{ width: 'auto', padding: '15px 30px' }}
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+}
   if (vistaActual === 'pedidos') {
     return (
       <div className="app-container">
@@ -616,14 +691,66 @@ export default function App() {
 
                     {metodoPago === 'efectivo' && (
                       <div className="efectivo-section">
-                        <label>Monto Recibido</label>
-                        <input
-                          type="number"
-                          className="input-monto"
-                          placeholder="Ingrese el monto"
-                          value={montoRecibido}
-                          onChange={(e) => setMontoRecibido(e.target.value)}
-                        />
+                        <div className="monto-display">
+                          <label>Monto Recibido</label>
+                          <div className="monto-valor">
+                            {montoRecibido ? formatearPrecio(parseFloat(montoRecibido)) : '$0'}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-limpiar-monto"
+                            onClick={limpiarMontoRecibido}
+                          >
+                            🗑️ Limpiar
+                          </button>
+                        </div>
+
+                        <label className="billetes-label">Selecciona los billetes:</label>
+                        <div className="billetes-grid">
+                          <button
+                            type="button"
+                            className="billete-btn"
+                            onClick={() => agregarBillete(2000)}
+                          >
+                            + $2.000
+                          </button>
+                          <button
+                            type="button"
+                            className="billete-btn"
+                            onClick={() => agregarBillete(5000)}
+                          >
+                            + $5.000
+                          </button>
+                          <button
+                            type="button"
+                            className="billete-btn"
+                            onClick={() => agregarBillete(10000)}
+                          >
+                            + $10.000
+                          </button>
+                          <button
+                            type="button"
+                            className="billete-btn"
+                            onClick={() => agregarBillete(20000)}
+                          >
+                            + $20.000
+                          </button>
+                          <button
+                            type="button"
+                            className="billete-btn"
+                            onClick={() => agregarBillete(50000)}
+                          >
+                            + $50.000
+                          </button>
+                          <button
+                            type="button"
+                            className="billete-btn"
+                            onClick={() => agregarBillete(100000)}
+                          >
+                            + $100.000
+                          </button>
+                        </div>
+                        
                         {montoRecibido && (
                           <div className="cambio-info">
                             <span>Cambio:</span>
@@ -634,7 +761,6 @@ export default function App() {
                         )}
                       </div>
                     )}
-
                     {metodoPago === 'transferencia' && (
                       <div className="transferencia-info">
                         <p>✅ Confirme que recibió la transferencia</p>
@@ -793,33 +919,6 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="seccion-reporte">
-                  <h2>🏆 Top 5 Productos Más Vendidos</h2>
-                  {estadisticas.topProductos.length === 0 ? (
-                    <p className="texto-vacio-seccion">No hay datos de productos</p>
-                  ) : (
-                    <div className="top-productos-lista">
-                      {estadisticas.topProductos.map((producto, index) => (
-                        <div key={index} className="top-producto-item">
-                          <div className="producto-ranking">#{index + 1}</div>
-                          <div className="producto-info-top">
-                            <span className="producto-nombre-top">{producto.nombre}</span>
-                            <span className="producto-cantidad-top">{producto.cantidad} unidades</span>
-                          </div>
-                          <div className="producto-barra">
-                            <div 
-                              className="producto-barra-fill"
-                              style={{
-                                width: `${(producto.cantidad / estadisticas.topProductos[0].cantidad) * 100}%`
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </>
             )}
