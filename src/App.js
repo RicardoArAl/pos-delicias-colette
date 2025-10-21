@@ -8,10 +8,11 @@ import {
 import { 
   guardarOrdenPendiente,
   obtenerOrdenesPendientes,
-  obtenerProximoNumeroOrdenTotal
+  obtenerProximoNumeroOrdenTotal,
+  actualizarOrdenPendiente,
+  cancelarOrden
 } from './firebasePendientes';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { db } from './firebase';
+
 const ProductosMenu = {
   empanadas: [
     { id: 'e1', nombre: 'Arroz pollo', precio: 3000, descripcion: 'Empanada con arroz y pollo' },
@@ -59,14 +60,13 @@ const ProductosMenu = {
   ]
 };
 
-// Función para exportar a CSV
+// Función para exportar ventas a CSV
 const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
   if (ventas.length === 0) {
     alert('No hay ventas para exportar');
     return;
   }
 
-  // Crear encabezados
   const encabezados = [
     'Numero de Orden',
     'Fecha',
@@ -79,7 +79,6 @@ const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
     'Total'
   ];
 
-  // Crear filas de datos
   const filas = ventas.map(venta => {
     const productos = venta.productos.map(p => p.nombre).join('; ');
     const cantidades = venta.productos.map(p => p.cantidad).join('; ');
@@ -97,14 +96,12 @@ const exportarVentasCSV = (ventas, nombreArchivo = 'ventas') => {
     ];
   });
 
-  // Construir CSV con BOM para UTF-8
   const BOM = '\uFEFF';
   let csvContent = BOM + encabezados.join(',') + '\n';
   filas.forEach(fila => {
     csvContent += fila.join(',') + '\n';
   });
 
-  // Crear y descargar archivo
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
@@ -134,7 +131,6 @@ const exportarReporteCSV = (estadisticas, periodo) => {
     ['Total Transferencia', estadisticas.totalTransferencia]
   ];
 
-  // Construir CSV con BOM para UTF-8
   const BOM = '\uFEFF';
   let csvContent = BOM + encabezados.join(',') + '\n';
   filas.forEach(fila => {
@@ -158,6 +154,7 @@ const exportarReporteCSV = (estadisticas, periodo) => {
 };
 
 export default function App() {
+  // Estados principales
   const [vistaActual, setVistaActual] = useState('pedidos');
   const [categoriaActiva, setCategoriaActiva] = useState('empanadas');
   const [pedido, setPedido] = useState([]);
@@ -172,11 +169,6 @@ export default function App() {
   const [busquedaOrden, setBusquedaOrden] = useState('');
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [periodoReporte, setPeriodoReporte] = useState('todo');
-  const agregarBillete = (valor) => {
-    const montoActual = parseFloat(montoRecibido) || 0;
-    const nuevoMonto = montoActual + valor;
-    setMontoRecibido(nuevoMonto.toString());
-  };
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [ordenesPendientes, setOrdenesPendientes] = useState([]);
@@ -187,9 +179,7 @@ export default function App() {
   const [mostrarConfirmacionCancelar, setMostrarConfirmacionCancelar] = useState(false);
   const [mostrarConfirmacionPendiente, setMostrarConfirmacionPendiente] = useState(false);
   const [numeroOrdenPendiente, setNumeroOrdenPendiente] = useState(null);
-  const limpiarMontoRecibido = () => {
-    setMontoRecibido('');
-  };
+
   const categorias = [
     { id: 'empanadas', nombre: 'Empanadas', icon: '🥟' },
     { id: 'perros', nombre: 'Perros', icon: '🌭' },
@@ -200,35 +190,37 @@ export default function App() {
     { id: 'bebidas', nombre: 'Bebidas', icon: '🥤' }
   ];
 
-  // Cargar ventas desde Firebase al iniciar
+  // Cargar datos iniciales desde Firebase
   useEffect(() => {
-  const cargarDatosIniciales = async () => {
-    try {
-      setCargando(true);
-      setError(null);
-      
-      // Cargar ventas y órdenes pendientes en paralelo
-      const [ventasFirebase, pendientesFirebase] = await Promise.all([
-        obtenerVentasFirebase(),
-        obtenerOrdenesPendientes()
-      ]);
-      
-      setVentas(ventasFirebase);
-      setTotalVentas(ventasFirebase.length);
-      setOrdenesPendientes(pendientesFirebase);
-      
-      console.log('✅ Ventas cargadas:', ventasFirebase.length);
-      console.log('✅ Órdenes pendientes:', pendientesFirebase.length);
-    } catch (error) {
-      console.error('❌ Error al cargar datos:', error);
-      setError('No se pudieron cargar los datos. Intenta recargar la página.');
-    } finally {
-      setCargando(false);
-    }
-  };
+    const cargarDatosIniciales = async () => {
+      try {
+        setCargando(true);
+        setError(null);
+        
+        const [ventasFirebase, pendientesFirebase] = await Promise.all([
+          obtenerVentasFirebase(),
+          obtenerOrdenesPendientes()
+        ]);
+        
+        setVentas(ventasFirebase);
+        setTotalVentas(ventasFirebase.length);
+        setOrdenesPendientes(pendientesFirebase);
+        
+        console.log('✅ Ventas cargadas:', ventasFirebase.length);
+        console.log('✅ Órdenes pendientes:', pendientesFirebase.length);
+      } catch (error) {
+        console.error('❌ Error al cargar datos:', error);
+        setError('No se pudieron cargar los datos. Intenta recargar la página.');
+      } finally {
+        setCargando(false);
+      }
+    };
 
-  cargarDatosIniciales();
-}, []);
+    cargarDatosIniciales();
+  }, []);
+  // ========================================
+  // FUNCIONES DE MANEJO DE PEDIDOS
+  // ========================================
 
   const agregarProducto = (producto) => {
     const existe = pedido.find(item => item.id === producto.id);
@@ -286,6 +278,10 @@ export default function App() {
     });
   };
 
+  // ========================================
+  // FUNCIONES DE PAGO
+  // ========================================
+
   const abrirPantallaPago = () => {
     setMostrarPago(true);
     setMetodoPago('');
@@ -297,278 +293,273 @@ export default function App() {
     setMetodoPago('');
     setMontoRecibido('');
   };
-const guardarComoPendiente = async () => {
-  if (pedido.length === 0) {
-    alert('El pedido está vacío');
-    return;
-  }
 
-  try {
-    // Obtener el próximo número de orden
-    const nuevaOrden = obtenerProximoNumeroOrdenTotal(ventas, ordenesPendientes);
-    const ahora = new Date();
-    
-    // Crear objeto de orden pendiente
-    const ordenPendiente = {
-      numeroOrden: nuevaOrden,
-      estado: 'pendiente',
-      fecha: ahora.toISOString().split('T')[0],
-      hora: ahora.toTimeString().split(' ')[0],
-      
-      // Estructura de items agregados
-      itemsAgregados: [
-        {
-          timestamp: ahora.toTimeString().split(' ')[0],
-          productos: pedido.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            precio: item.precio,
-            cantidad: item.cantidad
-          })),
-          subtotal: calcularTotal()
-        }
-      ],
-      
-      total: calcularTotal(),
-      cantidadProductos: pedido.reduce((sum, item) => sum + item.cantidad, 0),
-      
-      // Campos de pago (se llenarán cuando se pague)
-      metodoPago: null,
-      montoRecibido: null,
-      cambio: null,
-      fechaPago: null,
-      horaPago: null
-    };
-
-    // Guardar en Firebase
-    await guardarOrdenPendiente(ordenPendiente);
-
-    // Actualizar estado local
-    const pendientesActualizadas = await obtenerOrdenesPendientes();
-    setOrdenesPendientes(pendientesActualizadas);
-    
-    // Mostrar confirmación
-    setNumeroOrdenPendiente(nuevaOrden);
-    setMostrarConfirmacionPendiente(true);
-
-    // Limpiar pedido después de 2 segundos
-    setTimeout(() => {
-      setMostrarConfirmacionPendiente(false);
-      setPedido([]);
-      setNumeroOrdenPendiente(null);
-    }, 2000);
-
-    console.log('✅ Orden guardada como pendiente:', nuevaOrden);
-  } catch (error) {
-    console.error('❌ Error al guardar orden pendiente:', error);
-    alert('Hubo un error al guardar la orden. Por favor, intenta de nuevo.');
-  }
-};
-  // FASE 3: Abrir detalle de orden pendiente
-  const abrirDetalleOrden = (orden) => {
-  setOrdenSeleccionada(orden);
-  setMostrarDetalleOrden(true);
+  const agregarBillete = (valor) => {
+    const montoActual = parseFloat(montoRecibido) || 0;
+    const nuevoMonto = montoActual + valor;
+    setMontoRecibido(nuevoMonto.toString());
   };
 
-// FASE 3: Cerrar modal de detalle
-  const cerrarDetalleOrden = () => {
-  setOrdenSeleccionada(null);
-  setMostrarDetalleOrden(false);
-  setModoAgregarProductos(false);
-  setProductosTemporales([]);
-  };
-
-  // FASE 3: Iniciar modo de agregar productos a orden existente
-  const iniciarAgregarProductos = () => {
-  setModoAgregarProductos(true);
-  setProductosTemporales([]);
-  setVistaActual('pedidos');
-  setMostrarDetalleOrden(false);
-  };
-
-// FASE 3: Agregar producto al carrito temporal
-  const agregarProductoTemporal = (producto) => {
-  const productoExistente = productosTemporales.find(p => p.id === producto.id);
-  
-  if (productoExistente) {
-    setProductosTemporales(productosTemporales.map(p =>
-      p.id === producto.id 
-        ? { ...p, cantidad: p.cantidad + 1 }
-        : p
-    ));
-  } else {
-    setProductosTemporales([...productosTemporales, { ...producto, cantidad: 1 }]);
-  }
-  };
-
-// FASE 3: Quitar producto del carrito temporal
-  const quitarProductoTemporal = (productoId) => {
-  const producto = productosTemporales.find(p => p.id === productoId);
-  
-  if (producto.cantidad > 1) {
-    setProductosTemporales(productosTemporales.map(p =>
-      p.id === productoId
-        ? { ...p, cantidad: p.cantidad - 1 }
-        : p
-    ));
-  } else {
-    setProductosTemporales(productosTemporales.filter(p => p.id !== productoId));
-  }
-  };
-
-// FASE 3: Cancelar agregar productos
-  const cancelarAgregarProductos = () => {
-  setModoAgregarProductos(false);
-  setProductosTemporales([]);
-  setVistaActual('pendientes');
-  };
-
-  // FASE 3: Confirmar productos agregados a la orden
-const confirmarProductosAgregados = async () => {
-  if (productosTemporales.length === 0) {
-    alert('Debes agregar al menos un producto');
-    return;
-  }
-
-  try {
-    // Crear nuevo grupo de productos agregados
-    const ahora = new Date();
-    const nuevoGrupo = {
-      timestamp: ahora.toTimeString().split(' ')[0],
-      productos: productosTemporales.map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        precio: p.precio,
-        cantidad: p.cantidad
-      })),
-      subtotal: productosTemporales.reduce((sum, p) => sum + (p.precio * p.cantidad), 0)
-    };
-
-    // Agregar al array existente de itemsAgregados
-    const itemsActualizados = [...(ordenSeleccionada.itemsAgregados || []), nuevoGrupo];
-
-    // Calcular nuevo total
-    const nuevoTotal = itemsActualizados.reduce((sum, grupo) => sum + grupo.subtotal, 0);
-
-    // Calcular nueva cantidad de productos
-    const nuevaCantidadProductos = itemsActualizados.reduce((sum, grupo) => 
-      sum + grupo.productos.reduce((pSum, p) => pSum + p.cantidad, 0), 0
-    );
-
-    // Actualizar en Firebase
-    const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
-    await updateDoc(ordenRef, {
-      itemsAgregados: itemsActualizados,
-      total: nuevoTotal,
-      cantidadProductos: nuevaCantidadProductos,
-      ultimaActualizacion: Timestamp.now()
-    });
-
-    // Actualizar lista de pendientes
-    const pendientesActualizadas = await obtenerOrdenesPendientes();
-    setOrdenesPendientes(pendientesActualizadas);
-
-    // Limpiar y volver
-    setModoAgregarProductos(false);
-    setProductosTemporales([]);
-    setOrdenSeleccionada(null);
-    setVistaActual('pendientes');
-    alert('✅ Productos agregados exitosamente');
-
-  } catch (error) {
-    console.error('Error al agregar productos:', error);
-    alert('❌ Error al agregar productos');
-  }
-};
-
-  // FASE 3: Procesar pago de orden pendiente
-  const procesarPagoPendiente = (orden) => {
-  setPedido(orden.productos);
-  setOrdenSeleccionada(orden);
-  setMostrarDetalleOrden(false);
-  setMostrarPago(true);
+  const limpiarMontoRecibido = () => {
+    setMontoRecibido('');
   };
 
   const confirmarPago = async () => {
-  // FASE 3: Detectar si es pago de orden pendiente
-  const esPagoPendiente = ordenSeleccionada !== null;
-  
-  // Validaciones existentes
-  if (metodoPago === 'efectivo') {
-    const cambio = calcularCambio();
-    if (cambio < 0) {
-      alert('El monto recibido es menor al total');
-      return;
-    }
-  }
-
-  try {
-    // Preparar el objeto de venta
-    const nuevaOrden = esPagoPendiente 
-    ? ordenSeleccionada.numeroOrden 
-    : obtenerProximoNumeroOrdenFirebase(ventas);
-    const ahora = new Date();
+    const esPagoPendiente = ordenSeleccionada !== null;
     
-    const venta = {
-      id: esPagoPendiente ? ordenSeleccionada.id : `venta-${Date.now()}`,
-      numeroOrden: nuevaOrden,
-      fecha: ahora.toISOString().split('T')[0],
-      hora: ahora.toTimeString().split(' ')[0],
-      productos: pedido.map(item => ({
-        id: item.id,
-        nombre: item.nombre,
-        precio: item.precio,
-        cantidad: item.cantidad
-      })),
-      metodoPago: metodoPago,
-      montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
-      cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
-      total: calcularTotal()
-    };
+    if (metodoPago === 'efectivo') {
+      const cambio = calcularCambio();
+      if (cambio < 0) {
+        alert('El monto recibido es menor al total');
+        return;
+      }
+    }
 
-    // Guardar en Firebase
-    await guardarVentaFirebase(venta);
-    // FASE 3: Si es pendiente, marcarla como pagada
-    if (esPagoPendiente) {
-      const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
-      await updateDoc(ordenRef, {
-        estado: 'pagada',
+    try {
+      const nuevaOrden = esPagoPendiente 
+        ? ordenSeleccionada.numeroOrden 
+        : obtenerProximoNumeroOrdenFirebase(ventas);
+      const ahora = new Date();
+      
+      const venta = {
+        id: esPagoPendiente ? ordenSeleccionada.firebaseId : `venta-${Date.now()}`,
+        numeroOrden: nuevaOrden,
+        fecha: ahora.toISOString().split('T')[0],
+        hora: ahora.toTimeString().split(' ')[0],
+        productos: pedido.map(item => ({
+          id: item.id,
+          nombre: item.nombre,
+          precio: item.precio,
+          cantidad: item.cantidad
+        })),
         metodoPago: metodoPago,
         montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
         cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
-        fechaPago: venta.fecha,
-        horaPago: venta.hora
+        total: calcularTotal()
+      };
+
+      await guardarVentaFirebase(venta);
+
+      if (esPagoPendiente) {
+        await actualizarOrdenPendiente(ordenSeleccionada.firebaseId, {
+          estado: 'pagada',
+          metodoPago: metodoPago,
+          montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
+          cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
+          fechaPago: venta.fecha,
+          horaPago: venta.hora
+        });
+
+        const pendientesActualizadas = await obtenerOrdenesPendientes();
+        setOrdenesPendientes(pendientesActualizadas);
+      }
+
+      const ventasActualizadas = await obtenerVentasFirebase();
+      setVentas(ventasActualizadas);
+      setTotalVentas(ventasActualizadas.length);
+      
+      setNumeroOrden(nuevaOrden);
+      setPagoExitoso(true);
+
+      setTimeout(() => {
+        setPagoExitoso(false);
+        setMostrarPago(false);
+        setPedido([]);
+        setMetodoPago('');
+        setMontoRecibido('');
+        setNumeroOrden(null);
+        setOrdenSeleccionada(null);
+      }, 3000);
+
+    } catch (error) {
+      console.error('❌ Error al procesar el pago:', error);
+      alert('Hubo un error al guardar la venta. Por favor, intenta de nuevo.');
+    }
+  };
+
+  // ========================================
+  // FUNCIONES DE ÓRDENES PENDIENTES
+  // ========================================
+
+  const guardarComoPendiente = async () => {
+    if (pedido.length === 0) {
+      alert('El pedido está vacío');
+      return;
+    }
+
+    try {
+      const nuevaOrden = obtenerProximoNumeroOrdenTotal(ventas, ordenesPendientes);
+      const ahora = new Date();
+      
+      const ordenPendiente = {
+        numeroOrden: nuevaOrden,
+        estado: 'pendiente',
+        fecha: ahora.toISOString().split('T')[0],
+        hora: ahora.toTimeString().split(' ')[0],
+        productos: pedido.map(item => ({
+          id: item.id,
+          nombre: item.nombre,
+          precio: item.precio,
+          cantidad: item.cantidad
+        })),
+        total: calcularTotal(),
+        cantidadProductos: pedido.reduce((sum, item) => sum + item.cantidad, 0)
+      };
+
+      await guardarOrdenPendiente(ordenPendiente);
+
+      const pendientesActualizadas = await obtenerOrdenesPendientes();
+      setOrdenesPendientes(pendientesActualizadas);
+      
+      setNumeroOrdenPendiente(nuevaOrden);
+      setMostrarConfirmacionPendiente(true);
+
+      setTimeout(() => {
+        setMostrarConfirmacionPendiente(false);
+        setPedido([]);
+        setNumeroOrdenPendiente(null);
+      }, 2000);
+
+      console.log('✅ Orden guardada como pendiente:', nuevaOrden);
+    } catch (error) {
+      console.error('❌ Error al guardar orden pendiente:', error);
+      alert('Hubo un error al guardar la orden. Por favor, intenta de nuevo.');
+    }
+  };
+
+  const abrirDetalleOrden = (orden) => {
+    setOrdenSeleccionada(orden);
+    setMostrarDetalleOrden(true);
+  };
+
+  const cerrarDetalleOrden = () => {
+    setOrdenSeleccionada(null);
+    setMostrarDetalleOrden(false);
+    setModoAgregarProductos(false);
+    setProductosTemporales([]);
+  };
+
+  const procesarPagoPendiente = (orden) => {
+    setPedido(orden.productos);
+    setOrdenSeleccionada(orden);
+    setMostrarDetalleOrden(false);
+    setMostrarPago(true);
+  };
+
+  const solicitarCancelarOrden = (orden) => {
+    setOrdenSeleccionada(orden);
+    setMostrarConfirmacionCancelar(true);
+  };
+
+  const cancelarOrdenPendiente = async () => {
+    try {
+      await cancelarOrden(ordenSeleccionada.firebaseId);
+
+      const pendientesActualizadas = await obtenerOrdenesPendientes();
+      setOrdenesPendientes(pendientesActualizadas);
+
+      setMostrarConfirmacionCancelar(false);
+      setMostrarDetalleOrden(false);
+      setOrdenSeleccionada(null);
+
+      alert('✅ Orden cancelada');
+
+    } catch (error) {
+      console.error('Error al cancelar orden:', error);
+      alert('❌ Error al cancelar orden');
+    }
+  };
+
+  // ========================================
+  // FUNCIONES DE AGREGAR PRODUCTOS A ORDEN
+  // ========================================
+
+  const iniciarAgregarProductos = () => {
+    setModoAgregarProductos(true);
+    setProductosTemporales([]);
+    setVistaActual('pedidos');
+    setMostrarDetalleOrden(false);
+  };
+
+  const agregarProductoTemporal = (producto) => {
+    const productoExistente = productosTemporales.find(p => p.id === producto.id);
+    
+    if (productoExistente) {
+      setProductosTemporales(productosTemporales.map(p =>
+        p.id === producto.id 
+          ? { ...p, cantidad: p.cantidad + 1 }
+          : p
+      ));
+    } else {
+      setProductosTemporales([...productosTemporales, { ...producto, cantidad: 1 }]);
+    }
+  };
+
+  const quitarProductoTemporal = (productoId) => {
+    const producto = productosTemporales.find(p => p.id === productoId);
+    
+    if (producto && producto.cantidad > 1) {
+      setProductosTemporales(productosTemporales.map(p =>
+        p.id === productoId
+          ? { ...p, cantidad: p.cantidad - 1 }
+          : p
+      ));
+    } else {
+      setProductosTemporales(productosTemporales.filter(p => p.id !== productoId));
+    }
+  };
+
+  const cancelarAgregarProductos = () => {
+    setModoAgregarProductos(false);
+    setProductosTemporales([]);
+    setVistaActual('pendientes');
+  };
+
+  const confirmarProductosAgregados = async () => {
+    if (productosTemporales.length === 0) {
+      alert('Debes agregar al menos un producto');
+      return;
+    }
+
+    try {
+      const productosActualizados = [...ordenSeleccionada.productos];
+      
+      productosTemporales.forEach(nuevoProducto => {
+        const existente = productosActualizados.find(p => p.id === nuevoProducto.id);
+        
+        if (existente) {
+          existente.cantidad += nuevoProducto.cantidad;
+        } else {
+          productosActualizados.push(nuevoProducto);
+        }
+      });
+
+      const nuevoTotal = productosActualizados.reduce((sum, p) => 
+        sum + (p.precio * p.cantidad), 0
+      );
+
+      await actualizarOrdenPendiente(ordenSeleccionada.firebaseId, {
+        productos: productosActualizados,
+        total: nuevoTotal
       });
 
       const pendientesActualizadas = await obtenerOrdenesPendientes();
       setOrdenesPendientes(pendientesActualizadas);
+
+      setModoAgregarProductos(false);
+      setProductosTemporales([]);
+      setVistaActual('pendientes');
+      alert('✅ Productos agregados exitosamente');
+
+    } catch (error) {
+      console.error('Error al agregar productos:', error);
+      alert('❌ Error al agregar productos');
     }
+  };
 
-    // Actualizar el estado local
-    const ventasActualizadas = await obtenerVentasFirebase();
-    setVentas(ventasActualizadas);
-    setTotalVentas(ventasActualizadas.length);
-    
-    // Mostrar éxito
-    setNumeroOrden(nuevaOrden);
-    setPagoExitoso(true);
-
-    // Limpiar después de 3 segundos
-    setTimeout(() => {
-      setPagoExitoso(false);
-      setMostrarPago(false);
-      setPedido([]);
-      setMetodoPago('');
-      setMontoRecibido('');
-      setNumeroOrden(null);
-      setOrdenSeleccionada(null);
-    }, 3000);
-
-  } catch (error) {
-    console.error('❌ Error al procesar el pago:', error);
-    alert('Hubo un error al guardar la venta. Por favor, intenta de nuevo.');
-  }
-};
+  // ========================================
+  // FUNCIONES DE FILTROS Y ESTADÍSTICAS
+  // ========================================
 
   const filtrarVentas = () => {
     let ventasFiltradas = [...ventas];
@@ -673,85 +664,63 @@ const confirmarProductosAgregados = async () => {
       topProductos
     };
   };
-  // FASE 3: Solicitar cancelación de orden
-const solicitarCancelarOrden = (orden) => {
-  setOrdenSeleccionada(orden);
-  setMostrarConfirmacionCancelar(true);
-};
 
-// FASE 3: Cancelar orden pendiente
-const cancelarOrdenPendiente = async () => {
-  try {
-    const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
-    await updateDoc(ordenRef, {
-      estado: 'cancelada',
-      fechaCancelacion: new Date().toISOString().split('T')[0],
-      horaCancelacion: new Date().toTimeString().split(' ')[0]
-    });
-
-    const pendientesActualizadas = await obtenerOrdenesPendientes();
-    setOrdenesPendientes(pendientesActualizadas);
-
-    setMostrarConfirmacionCancelar(false);
-    setMostrarDetalleOrden(false);
-    setOrdenSeleccionada(null);
-
-    alert('✅ Orden cancelada');
-
-  } catch (error) {
-    console.error('Error al cancelar orden:', error);
-    alert('❌ Error al cancelar orden');
-  }
-    };
   const ventasFiltradas = filtrarVentas();
   const estadisticas = calcularEstadisticas();
-  // Mostrar pantalla de carga mientras se obtienen las ventas
-if (cargando) {
-  return (
-    <div className="app-container" style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      flexDirection: 'column',
-      gap: '20px'
-    }}>
-      <div style={{
-        fontSize: '4rem',
-        animation: 'spin 1s linear infinite'
-      }}>⏳</div>
-      <h2>Cargando sistema POS...</h2>
-      <p style={{ color: '#6b7280' }}>Conectando con Firebase</p>
-    </div>
-  );
-}
 
-// Mostrar error si no se pudieron cargar las ventas
-if (error) {
-  return (
-    <div className="app-container" style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      flexDirection: 'column',
-      gap: '20px'
-    }}>
-      <div style={{ fontSize: '4rem' }}>⚠️</div>
-      <h2>Error al cargar datos</h2>
-      <p style={{ color: '#dc2626', textAlign: 'center', maxWidth: '500px' }}>
-        {error}
-      </p>
-      <button 
-        className="btn-pagar"
-        onClick={() => window.location.reload()}
-        style={{ width: 'auto', padding: '15px 30px' }}
-      >
-        Reintentar
-      </button>
-    </div>
-  );
-}
+  // ========================================
+  // PANTALLAS DE CARGA Y ERROR
+  // ========================================
+
+  if (cargando) {
+    return (
+      <div className="app-container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '20px'
+      }}>
+        <div style={{
+          fontSize: '4rem',
+          animation: 'spin 1s linear infinite'
+        }}>⏳</div>
+        <h2>Cargando sistema POS...</h2>
+        <p style={{ color: '#6b7280' }}>Conectando con Firebase</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '20px'
+      }}>
+        <div style={{ fontSize: '4rem' }}>⚠️</div>
+        <h2>Error al cargar datos</h2>
+        <p style={{ color: '#dc2626', textAlign: 'center', maxWidth: '500px' }}>
+          {error}
+        </p>
+        <button 
+          className="btn-pagar"
+          onClick={() => window.location.reload()}
+          style={{ width: 'auto', padding: '15px 30px' }}
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+// ========================================
+  // VISTA: PEDIDOS (PRINCIPAL)
+  // ========================================
+
   if (vistaActual === 'pedidos') {
     return (
       <div className="app-container">
@@ -801,46 +770,21 @@ if (error) {
               </button>
             ))}
           </div>
-{/* Banner de modo agregar productos */}
-{modoAgregarProductos && ordenSeleccionada && (
-  <div className="banner-modo-agregar">
-    <div className="banner-contenido">
-      <div className="banner-info">
-        <span className="banner-icono">➕</span>
-        <div>
-          <h3>Agregando productos a Orden #{ordenSeleccionada.numeroOrden}</h3>
-          <p>Selecciona productos para agregar a la orden</p>
-        </div>
-      </div>
-      <div className="banner-acciones">
-        <div className="banner-total">
-          <span>Total a agregar:</span>
-          <span className="banner-total-valor">
-            {formatearPrecio(productosTemporales.reduce((sum, p) => sum + (p.precio * p.cantidad), 0))}
-          </span>
-        </div>
-        <button className="btn-banner-cancelar" onClick={cancelarAgregarProductos}>
-          Cancelar
-        </button>
-        <button 
-          className="btn-banner-confirmar" 
-          onClick={confirmarProductosAgregados}
-          disabled={productosTemporales.length === 0}
-        >
-          Confirmar ({productosTemporales.length})
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+
           <div className="productos-container">
             <div className="productos-grid">
               {ProductosMenu[categoriaActiva].map(producto => (
-              <button
-                key={producto.id}
-                onClick={() => modoAgregarProductos ? agregarProductoTemporal(producto) : agregarProducto(producto)}
-                className="producto-card"
-              >
+                <button
+                  key={producto.id}
+                  onClick={() => {
+                    if (modoAgregarProductos) {
+                      agregarProductoTemporal(producto);
+                    } else {
+                      agregarProducto(producto);
+                    }
+                  }}
+                  className="producto-card"
+                >
                   <h3>{producto.nombre}</h3>
                   {producto.descripcion && (
                     <p className="producto-descripcion">{producto.descripcion}</p>
@@ -855,11 +799,17 @@ if (error) {
         <div className="pedido-panel">
           <div className="pedido-header">
             <div className="pedido-header-top">
-              <h2>{modoAgregarProductos ? '➕ Productos a Agregar' : '🛒 Pedido Actual'}</h2>
+              <h2>🛒 {modoAgregarProductos ? 'Agregar Productos' : 'Pedido Actual'}</h2>
               <button
-                onClick={limpiarPedido}
+                onClick={() => {
+                  if (modoAgregarProductos) {
+                    setProductosTemporales([]);
+                  } else {
+                    limpiarPedido();
+                  }
+                }}
                 className="btn-limpiar"
-                disabled={pedido.length === 0}
+                disabled={modoAgregarProductos ? productosTemporales.length === 0 : pedido.length === 0}
               >
                 🗑️ Limpiar
               </button>
@@ -870,94 +820,186 @@ if (error) {
           </div>
 
           <div className="pedido-items">
-            {(modoAgregarProductos ? productosTemporales : pedido).length === 0 ? (
-              <div className="pedido-vacio">
-                <div className="carrito-vacio">🛒</div>
-                <p className="texto-vacio">Pedido vacío</p>
-                <p className="texto-vacio-small">Toca un producto para agregarlo</p>
-              </div>
+            {modoAgregarProductos ? (
+              productosTemporales.length === 0 ? (
+                <div className="pedido-vacio">
+                  <div className="carrito-vacio">➕</div>
+                  <p className="texto-vacio">Selecciona productos</p>
+                  <p className="texto-vacio-small">Para agregar a la orden #{ordenSeleccionada?.numeroOrden}</p>
+                </div>
+              ) : (
+                <div className="items-lista">
+                  {productosTemporales.map(item => (
+                    <div key={item.id} className="item-card">
+                      <div className="item-header">
+                        <div className="item-info">
+                          <h4>{item.nombre}</h4>
+                          <p className="item-precio">{formatearPrecio(item.precio)}</p>
+                        </div>
+                        <button
+                          onClick={() => setProductosTemporales(productosTemporales.filter(p => p.id !== item.id))}
+                          className="btn-eliminar"
+                        >
+                          ❌
+                        </button>
+                      </div>
+                      
+                      <div className="item-controls">
+                        <div className="cantidad-control">
+                          <button
+                            onClick={() => quitarProductoTemporal(item.id)}
+                            className="btn-cantidad btn-menos"
+                          >
+                            −
+                          </button>
+                          <span className="cantidad">{item.cantidad}</span>
+                          <button
+                            onClick={() => agregarProductoTemporal(item)}
+                            className="btn-cantidad btn-mas"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="subtotal">
+                          <p className="subtotal-label">Subtotal</p>
+                          <p className="subtotal-valor">
+                            {formatearPrecio(item.precio * item.cantidad)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             ) : (
-              <div className="items-lista">
-                {(modoAgregarProductos ? productosTemporales : pedido).map(item => (
-                  <div key={item.id} className="item-card">
-                    <div className="item-header">
-                      <div className="item-info">
-                        <h4>{item.nombre}</h4>
-                        <p className="item-precio">{formatearPrecio(item.precio)}</p>
-                      </div>
-                      <button
-                        onClick={() => eliminarItem(item.id)}
-                        className="btn-eliminar"
-                      >
-                        ❌
-                      </button>
-                    </div>
-                    
-                    <div className="item-controls">
-                      <div className="cantidad-control">
+              pedido.length === 0 ? (
+                <div className="pedido-vacio">
+                  <div className="carrito-vacio">🛒</div>
+                  <p className="texto-vacio">Pedido vacío</p>
+                  <p className="texto-vacio-small">Toca un producto para agregarlo</p>
+                </div>
+              ) : (
+                <div className="items-lista">
+                  {pedido.map(item => (
+                    <div key={item.id} className="item-card">
+                      <div className="item-header">
+                        <div className="item-info">
+                          <h4>{item.nombre}</h4>
+                          <p className="item-precio">{formatearPrecio(item.precio)}</p>
+                        </div>
                         <button
-                          onClick={() => modoAgregarProductos ? quitarProductoTemporal(item.id) : cambiarCantidad(item.id, -1)}
-                          className="btn-cantidad btn-menos"
+                          onClick={() => eliminarItem(item.id)}
+                          className="btn-eliminar"
                         >
-                          −
-                        </button>
-                        <span className="cantidad">{item.cantidad}</span>
-                        <button
-                          onClick={() => modoAgregarProductos ? agregarProductoTemporal(item) : cambiarCantidad(item.id, 1)}
-                          className="btn-cantidad btn-mas"
-                        >
-                          +
+                          ❌
                         </button>
                       </div>
-                      <div className="subtotal">
-                        <p className="subtotal-label">Subtotal</p>
-                        <p className="subtotal-valor">
-                          {formatearPrecio(item.precio * item.cantidad)}
-                        </p>
+                      
+                      <div className="item-controls">
+                        <div className="cantidad-control">
+                          <button
+                            onClick={() => cambiarCantidad(item.id, -1)}
+                            className="btn-cantidad btn-menos"
+                          >
+                            −
+                          </button>
+                          <span className="cantidad">{item.cantidad}</span>
+                          <button
+                            onClick={() => cambiarCantidad(item.id, 1)}
+                            className="btn-cantidad btn-mas"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="subtotal">
+                          <p className="subtotal-label">Subtotal</p>
+                          <p className="subtotal-valor">
+                            {formatearPrecio(item.precio * item.cantidad)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
 
           <div className="pedido-footer">
-            <div className="total-container">
-              <span className="total-label">TOTAL</span>
-              <span className="total-valor">
-                {formatearPrecio(
-                modoAgregarProductos 
-                ? productosTemporales.reduce((sum, p) => sum + (p.precio * p.cantidad), 0)
-                : calcularTotal()
-                )}
-              </span>
-            </div>
-  
-            {!modoAgregarProductos && (
-            <div className="pedido-footer-botones">
-              <button
-                disabled={pedido.length === 0}
-                className="btn-pendiente"
-                onClick={guardarComoPendiente}
-                title="Guardar orden para pagar después"
-              >
-                📝 Guardar Pendiente
-              </button>
-    
-              <button
-                disabled={pedido.length === 0}
-                className="btn-pagar"
-                onClick={abrirPantallaPago}
-              >
-                💳 Pagar Ahora
-              </button>
-            </div>
-          )}
-            </div>
-  
-            <p className="fase-label">Sistema de Órdenes Pendientes</p>
+            {modoAgregarProductos ? (
+              <>
+                <div className="total-container">
+                  <span className="total-label">SUBTOTAL</span>
+                  <span className="total-valor">
+                    {formatearPrecio(productosTemporales.reduce((sum, item) => 
+                      sum + (item.precio * item.cantidad), 0))}
+                  </span>
+                </div>
+                <div className="pedido-footer-botones">
+                  <button
+                    className="btn-cancelar"
+                    onClick={cancelarAgregarProductos}
+                  >
+                    ← Cancelar
+                  </button>
+                  <button
+                    disabled={productosTemporales.length === 0}
+                    className="btn-pagar"
+                    onClick={confirmarProductosAgregados}
+                  >
+                    ✓ Confirmar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="total-container">
+                  <span className="total-label">TOTAL</span>
+                  <span className="total-valor">
+                    {formatearPrecio(calcularTotal())}
+                  </span>
+                </div>
+                <div className="pedido-footer-botones">
+                  <button
+                    disabled={pedido.length === 0}
+                    className="btn-pendiente"
+                    onClick={guardarComoPendiente}
+                    title="Guardar orden para pagar después"
+                  >
+                    📝 Guardar Pendiente
+                  </button>
+                  <button
+                    disabled={pedido.length === 0}
+                    className="btn-pagar"
+                    onClick={abrirPantallaPago}
+                  >
+                    💳 Pagar Ahora
+                  </button>
+                </div>
+                <p className="fase-label">Sistema de Órdenes Pendientes</p>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Modal de confirmación pendiente */}
+        {mostrarConfirmacionPendiente && (
+          <div className="modal-overlay">
+            <div className="modal-confirmacion-pendiente">
+              <div className="icono-pendiente">📝</div>
+              <h2>¡Orden Guardada!</h2>
+              <p className="numero-orden-pendiente">Orden #{numeroOrdenPendiente}</p>
+              <p className="mensaje-pendiente">
+                La orden ha sido guardada como pendiente
+              </p>
+              <p className="submensaje-pendiente">
+                Puedes agregar más productos o procesarla desde "Pendientes"
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de pago */}
         {mostrarPago && (
           <div className="modal-overlay">
             <div className="modal-pago">
@@ -1023,46 +1065,22 @@ if (error) {
 
                         <label className="billetes-label">Selecciona los billetes:</label>
                         <div className="billetes-grid">
-                          <button
-                            type="button"
-                            className="billete-btn"
-                            onClick={() => agregarBillete(2000)}
-                          >
+                          <button type="button" className="billete-btn" onClick={() => agregarBillete(2000)}>
                             + $2.000
                           </button>
-                          <button
-                            type="button"
-                            className="billete-btn"
-                            onClick={() => agregarBillete(5000)}
-                          >
+                          <button type="button" className="billete-btn" onClick={() => agregarBillete(5000)}>
                             + $5.000
                           </button>
-                          <button
-                            type="button"
-                            className="billete-btn"
-                            onClick={() => agregarBillete(10000)}
-                          >
+                          <button type="button" className="billete-btn" onClick={() => agregarBillete(10000)}>
                             + $10.000
                           </button>
-                          <button
-                            type="button"
-                            className="billete-btn"
-                            onClick={() => agregarBillete(20000)}
-                          >
+                          <button type="button" className="billete-btn" onClick={() => agregarBillete(20000)}>
                             + $20.000
                           </button>
-                          <button
-                            type="button"
-                            className="billete-btn"
-                            onClick={() => agregarBillete(50000)}
-                          >
+                          <button type="button" className="billete-btn" onClick={() => agregarBillete(50000)}>
                             + $50.000
                           </button>
-                          <button
-                            type="button"
-                            className="billete-btn"
-                            onClick={() => agregarBillete(100000)}
-                          >
+                          <button type="button" className="billete-btn" onClick={() => agregarBillete(100000)}>
                             + $100.000
                           </button>
                         </div>
@@ -1077,6 +1095,7 @@ if (error) {
                         )}
                       </div>
                     )}
+
                     {metodoPago === 'transferencia' && (
                       <div className="transferencia-info">
                         <p>✅ Confirme que recibió la transferencia</p>
@@ -1101,21 +1120,6 @@ if (error) {
                 <div className="pago-exitoso">
                   <div className="check-animation">✓</div>
                   <h2>¡Pago Exitoso!</h2>
-                  {mostrarConfirmacionPendiente && (
-                    <div className="modal-overlay">
-                      <div className="modal-confirmacion-pendiente">
-                        <div className="icono-pendiente">📝</div>
-                          <h2>¡Orden Guardada!</h2>
-                            <p className="numero-orden-pendiente">Orden #{numeroOrdenPendiente}</p>
-                            <p className="mensaje-pendiente">
-                            La orden ha sido guardada como pendiente
-                            </p>
-                            <p className="submensaje-pendiente">
-                            Puedes agregar más productos o procesarla desde "Pendientes"
-                            </p>
-                          </div>
-                        </div>
-)}
                   <p className="numero-orden">Orden #{numeroOrden}</p>
                   <p className="mensaje-exito">El pedido ha sido procesado y guardado correctamente</p>
                 </div>
@@ -1126,6 +1130,9 @@ if (error) {
       </div>
     );
   }
+  // ========================================
+  // VISTA: REPORTES
+  // ========================================
 
   if (vistaActual === 'reportes') {
     return (
@@ -1258,7 +1265,12 @@ if (error) {
       </div>
     );
   }
-if (vistaActual === 'pendientes') {
+
+  // ========================================
+  // VISTA: ÓRDENES PENDIENTES
+  // ========================================
+
+  if (vistaActual === 'pendientes') {
     return (
       <div className="app-container pendientes-view">
         <div className="pendientes-container">
@@ -1303,12 +1315,10 @@ if (vistaActual === 'pendientes') {
             ) : (
               <div className="pendientes-grid">
                 {ordenesPendientes.map(orden => {
-                  // Calcular tiempo transcurrido
                   const fechaCreacion = orden.fechaCreacion?.toDate() || new Date();
                   const ahora = new Date();
                   const minutosTranscurridos = Math.floor((ahora - fechaCreacion) / 1000 / 60);
                   
-                  // Determinar color según tiempo
                   let tiempoClase = 'tiempo-reciente';
                   if (minutosTranscurridos > 60) tiempoClase = 'tiempo-antiguo';
                   else if (minutosTranscurridos > 30) tiempoClase = 'tiempo-medio';
@@ -1343,21 +1353,17 @@ if (vistaActual === 'pendientes') {
                       </div>
 
                       <div className="orden-pendiente-productos">
-                        {orden.itemsAgregados && orden.itemsAgregados.map((grupo, idx) => (
-                          <div key={idx} className="grupo-productos">
-                            {grupo.productos.slice(0, 3).map((prod, pIdx) => (
-                              <div key={pIdx} className="producto-mini">
-                                <span className="producto-mini-cantidad">{prod.cantidad}x</span>
-                                <span className="producto-mini-nombre">{prod.nombre}</span>
-                              </div>
-                            ))}
-                            {grupo.productos.length > 3 && (
-                              <div className="producto-mini-mas">
-                                +{grupo.productos.length - 3} más
-                              </div>
-                            )}
+                        {orden.productos && orden.productos.slice(0, 3).map((prod, idx) => (
+                          <div key={idx} className="producto-mini">
+                            <span className="producto-mini-cantidad">{prod.cantidad}x</span>
+                            <span className="producto-mini-nombre">{prod.nombre}</span>
                           </div>
                         ))}
+                        {orden.productos && orden.productos.length > 3 && (
+                          <div className="producto-mini-mas">
+                            +{orden.productos.length - 3} más
+                          </div>
+                        )}
                       </div>
 
                       <div className="orden-pendiente-total">
@@ -1370,18 +1376,14 @@ if (vistaActual === 'pendientes') {
                       <div className="orden-acciones">
                         <button 
                           className="btn-detalle"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            abrirDetalleOrden(orden);
-                          }}
+                          onClick={() => abrirDetalleOrden(orden)}
                         >
                           👁️ Ver Detalle
                         </button>
   
                         <button 
                           className="btn-agregar"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             setOrdenSeleccionada(orden);
                             iniciarAgregarProductos();
                           }}
@@ -1391,24 +1393,18 @@ if (vistaActual === 'pendientes') {
   
                         <button 
                           className="btn-pagar"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            procesarPagoPendiente(orden);
-                          }}
+                          onClick={() => procesarPagoPendiente(orden)}
                         >
                           💳 Pagar
                         </button>
   
                         <button 
                           className="btn-cancelar"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            solicitarCancelarOrden(orden);
-                          }}
+                          onClick={() => solicitarCancelarOrden(orden)}
                         >
                           ❌ Cancelar
                         </button>
-                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -1416,9 +1412,116 @@ if (vistaActual === 'pendientes') {
             )}
           </div>
         </div>
+
+        {/* Modal de detalle de orden */}
+        {mostrarDetalleOrden && ordenSeleccionada && (
+          <div className="modal-overlay" onClick={cerrarDetalleOrden}>
+            <div className="modal-detalle-orden" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-detalle-header">
+                <h2>📋 Orden #{ordenSeleccionada.numeroOrden}</h2>
+                <button className="btn-cerrar-modal" onClick={cerrarDetalleOrden}>✕</button>
+              </div>
+
+              <div className="modal-detalle-info">
+                <div className="info-item">
+                  <span className="info-label">📅 Fecha:</span>
+                  <span>{ordenSeleccionada.fecha}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">🕐 Hora:</span>
+                  <span>{ordenSeleccionada.hora}</span>
+                </div>
+              </div>
+
+              <div className="modal-detalle-productos">
+                <h3>Productos:</h3>
+                {ordenSeleccionada.productos && ordenSeleccionada.productos.map((prod, index) => (
+                  <div key={index} className="detalle-producto-item">
+                    <span className="prod-cantidad">{prod.cantidad}x</span>
+                    <span className="prod-nombre">{prod.nombre}</span>
+                    <span className="prod-precio">
+                      {formatearPrecio(prod.precio * prod.cantidad)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="modal-detalle-total">
+                <span>TOTAL:</span>
+                <span className="total-valor">
+                  {formatearPrecio(ordenSeleccionada.total)}
+                </span>
+              </div>
+
+              <div className="modal-detalle-acciones">
+                <button 
+                  className="btn-modal-agregar"
+                  onClick={() => {
+                    setMostrarDetalleOrden(false);
+                    iniciarAgregarProductos();
+                  }}
+                >
+                  ➕ Agregar Productos
+                </button>
+                
+                <button 
+                  className="btn-modal-pagar"
+                  onClick={() => procesarPagoPendiente(ordenSeleccionada)}
+                >
+                  💳 Procesar Pago
+                </button>
+                
+                <button 
+                  className="btn-modal-cancelar"
+                  onClick={() => {
+                    setMostrarDetalleOrden(false);
+                    solicitarCancelarOrden(ordenSeleccionada);
+                  }}
+                >
+                  ❌ Cancelar Orden
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación de cancelación */}
+        {mostrarConfirmacionCancelar && ordenSeleccionada && (
+          <div className="modal-overlay">
+            <div className="modal-confirmacion-pendiente">
+              <div className="icono-pendiente" style={{ background: '#dc2626' }}>⚠️</div>
+              <h2>¿Cancelar Orden?</h2>
+              <p className="numero-orden-pendiente">Orden #{ordenSeleccionada.numeroOrden}</p>
+              <p className="mensaje-pendiente">
+                Esta acción no se puede deshacer
+              </p>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px', width: '100%' }}>
+                <button 
+                  className="btn-cancelar"
+                  onClick={() => setMostrarConfirmacionCancelar(false)}
+                  style={{ flex: 1 }}
+                >
+                  No, Mantener
+                </button>
+                <button 
+                  className="btn-confirmar"
+                  onClick={cancelarOrdenPendiente}
+                  style={{ flex: 1, background: '#dc2626' }}
+                >
+                  Sí, Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
+
+  // ========================================
+  // VISTA: HISTORIAL DE VENTAS
+  // ========================================
+
   return (
     <div className="app-container historial-view">
       <div className="historial-container">
@@ -1542,6 +1645,7 @@ if (vistaActual === 'pendientes') {
         </div>
       </div>
 
+      {/* Modal de detalle de venta */}
       {ventaSeleccionada && (
         <div className="modal-overlay" onClick={() => setVentaSeleccionada(null)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -1605,125 +1709,6 @@ if (vistaActual === 'pendientes') {
           </div>
         </div>
       )}
-      {/* FASE 3: Modal de Detalle de Orden */}
-{mostrarDetalleOrden && ordenSeleccionada && (
-  <div className="modal-overlay" onClick={cerrarDetalleOrden}>
-    <div className="modal-detalle-orden" onClick={(e) => e.stopPropagation()}>
-      
-      {/* Header */}
-      <div className="modal-detalle-header">
-        <h2>📋 Orden #{ordenSeleccionada.numeroOrden}</h2>
-        <button className="btn-cerrar-modal" onClick={cerrarDetalleOrden}>✕</button>
-      </div>
-
-      {/* Información */}
-      <div className="modal-detalle-info">
-        <div className="info-item">
-          <span className="info-label">📅 Fecha:</span>
-          <span>{ordenSeleccionada.fecha}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">🕐 Hora:</span>
-          <span>{ordenSeleccionada.hora}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">⏱️ Tiempo:</span>
-          <span>
-            {(() => {
-              const ahora = new Date();
-              const creacion = ordenSeleccionada.fechaCreacion?.toDate() || new Date();
-              const diffMs = ahora - creacion;
-              const diffMins = Math.floor(diffMs / 60000);
-              if (diffMins < 60) return `${diffMins} min`;
-              const diffHours = Math.floor(diffMins / 60);
-              return `${diffHours}h ${diffMins % 60}m`;
-            })()}
-          </span>
-        </div>
-      </div>
-
-      {/* Productos */}
-      <div className="modal-detalle-productos">
-        <h3>Productos:</h3>
-        {ordenSeleccionada.productos.map((prod, index) => (
-          <div key={index} className="detalle-producto-item">
-            <span className="prod-cantidad">{prod.cantidad}x</span>
-            <span className="prod-nombre">{prod.nombre}</span>
-            <span className="prod-precio">
-              ${((prod.precio * prod.cantidad) / 1000).toFixed(1)}k
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Total */}
-      <div className="modal-detalle-total">
-        <span>TOTAL:</span>
-        <span className="total-valor">
-          ${(ordenSeleccionada.total / 1000).toFixed(1)}k
-        </span>
-      </div>
-
-      {/* Acciones */}
-      <div className="modal-detalle-acciones">
-        <button 
-          className="btn-modal-agregar"
-          onClick={() => {
-            setMostrarDetalleOrden(false);
-            iniciarAgregarProductos();
-          }}
-        >
-          ➕ Agregar Productos
-        </button>
-        
-        <button 
-          className="btn-modal-pagar"
-          onClick={() => procesarPagoPendiente(ordenSeleccionada)}
-        >
-          💳 Procesar Pago
-        </button>
-        
-        <button 
-          className="btn-modal-cancelar"
-          onClick={() => {
-            setMostrarDetalleOrden(false);
-            solicitarCancelarOrden(ordenSeleccionada);
-          }}
-        >
-          ❌ Cancelar Orden
-        </button>
-      </div>
-
-    </div>
-    {/* FASE 3: Modal de Confirmación Cancelar */}
-{mostrarConfirmacionCancelar && ordenSeleccionada && (
-  <div className="modal-overlay" onClick={() => setMostrarConfirmacionCancelar(false)}>
-    <div className="modal-confirmacion-cancelar" onClick={(e) => e.stopPropagation()}>
-      <div className="icono-advertencia">⚠️</div>
-      <h2>¿Cancelar esta orden?</h2>
-      <p className="orden-a-cancelar">Orden #{ordenSeleccionada.numeroOrden}</p>
-      <p className="mensaje-advertencia">
-        Esta acción no se puede deshacer. La orden será marcada como cancelada.
-      </p>
-      <div className="modal-confirmacion-acciones">
-        <button 
-          className="btn-modal-no-cancelar"
-          onClick={() => setMostrarConfirmacionCancelar(false)}
-        >
-          No, mantener orden
-        </button>
-        <button 
-          className="btn-modal-si-cancelar"
-          onClick={cancelarOrdenPendiente}
-        >
-          Sí, cancelar orden
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-  </div>
-)}
     </div>
   );
 }
