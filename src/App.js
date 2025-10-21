@@ -10,7 +10,8 @@ import {
   obtenerOrdenesPendientes,
   obtenerProximoNumeroOrdenTotal
 } from './firebasePendientes';
-
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { db } from './firebase';
 const ProductosMenu = {
   empanadas: [
     { id: 'e1', nombre: 'Arroz pollo', precio: 3000, descripcion: 'Empanada con arroz y pollo' },
@@ -430,34 +431,47 @@ const confirmarProductosAgregados = async () => {
   }
 
   try {
-    const productosActualizados = [...ordenSeleccionada.productos];
-    
-    productosTemporales.forEach(nuevoProducto => {
-      const existente = productosActualizados.find(p => p.id === nuevoProducto.id);
-      
-      if (existente) {
-        existente.cantidad += nuevoProducto.cantidad;
-      } else {
-        productosActualizados.push(nuevoProducto);
-      }
-    });
+    // Crear nuevo grupo de productos agregados
+    const ahora = new Date();
+    const nuevoGrupo = {
+      timestamp: ahora.toTimeString().split(' ')[0],
+      productos: productosTemporales.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: p.precio,
+        cantidad: p.cantidad
+      })),
+      subtotal: productosTemporales.reduce((sum, p) => sum + (p.precio * p.cantidad), 0)
+    };
 
-    const nuevoTotal = productosActualizados.reduce((sum, p) => 
-      sum + (p.precio * p.cantidad), 0
+    // Agregar al array existente de itemsAgregados
+    const itemsActualizados = [...(ordenSeleccionada.itemsAgregados || []), nuevoGrupo];
+
+    // Calcular nuevo total
+    const nuevoTotal = itemsActualizados.reduce((sum, grupo) => sum + grupo.subtotal, 0);
+
+    // Calcular nueva cantidad de productos
+    const nuevaCantidadProductos = itemsActualizados.reduce((sum, grupo) => 
+      sum + grupo.productos.reduce((pSum, p) => pSum + p.cantidad, 0), 0
     );
 
+    // Actualizar en Firebase
     const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
     await updateDoc(ordenRef, {
-      productos: productosActualizados,
+      itemsAgregados: itemsActualizados,
       total: nuevoTotal,
+      cantidadProductos: nuevaCantidadProductos,
       ultimaActualizacion: Timestamp.now()
     });
 
+    // Actualizar lista de pendientes
     const pendientesActualizadas = await obtenerOrdenesPendientes();
     setOrdenesPendientes(pendientesActualizadas);
 
+    // Limpiar y volver
     setModoAgregarProductos(false);
     setProductosTemporales([]);
+    setOrdenSeleccionada(null);
     setVistaActual('pendientes');
     alert('✅ Productos agregados exitosamente');
 
@@ -787,17 +801,46 @@ if (error) {
               </button>
             ))}
           </div>
-//empieza
-
-//termina
+{/* Banner de modo agregar productos */}
+{modoAgregarProductos && ordenSeleccionada && (
+  <div className="banner-modo-agregar">
+    <div className="banner-contenido">
+      <div className="banner-info">
+        <span className="banner-icono">➕</span>
+        <div>
+          <h3>Agregando productos a Orden #{ordenSeleccionada.numeroOrden}</h3>
+          <p>Selecciona productos para agregar a la orden</p>
+        </div>
+      </div>
+      <div className="banner-acciones">
+        <div className="banner-total">
+          <span>Total a agregar:</span>
+          <span className="banner-total-valor">
+            {formatearPrecio(productosTemporales.reduce((sum, p) => sum + (p.precio * p.cantidad), 0))}
+          </span>
+        </div>
+        <button className="btn-banner-cancelar" onClick={cancelarAgregarProductos}>
+          Cancelar
+        </button>
+        <button 
+          className="btn-banner-confirmar" 
+          onClick={confirmarProductosAgregados}
+          disabled={productosTemporales.length === 0}
+        >
+          Confirmar ({productosTemporales.length})
+        </button>
+      </div>
+    </div>
+  </div>
+)}
           <div className="productos-container">
             <div className="productos-grid">
               {ProductosMenu[categoriaActiva].map(producto => (
-                <button
-                  key={producto.id}
-                  onClick={() => agregarProducto(producto)}
-                  className="producto-card"
-                >
+              <button
+                key={producto.id}
+                onClick={() => modoAgregarProductos ? agregarProductoTemporal(producto) : agregarProducto(producto)}
+                className="producto-card"
+              >
                   <h3>{producto.nombre}</h3>
                   {producto.descripcion && (
                     <p className="producto-descripcion">{producto.descripcion}</p>
@@ -812,7 +855,7 @@ if (error) {
         <div className="pedido-panel">
           <div className="pedido-header">
             <div className="pedido-header-top">
-              <h2>🛒 Pedido Actual</h2>
+              <h2>{modoAgregarProductos ? '➕ Productos a Agregar' : '🛒 Pedido Actual'}</h2>
               <button
                 onClick={limpiarPedido}
                 className="btn-limpiar"
@@ -821,11 +864,13 @@ if (error) {
                 🗑️ Limpiar
               </button>
             </div>
-            <p className="pedido-count">{pedido.length} item(s)</p>
+            <p className="pedido-count">
+              {modoAgregarProductos ? productosTemporales.length : pedido.length} item(s)
+            </p>
           </div>
 
           <div className="pedido-items">
-            {pedido.length === 0 ? (
+            {(modoAgregarProductos ? productosTemporales : pedido).length === 0 ? (
               <div className="pedido-vacio">
                 <div className="carrito-vacio">🛒</div>
                 <p className="texto-vacio">Pedido vacío</p>
@@ -833,7 +878,7 @@ if (error) {
               </div>
             ) : (
               <div className="items-lista">
-                {pedido.map(item => (
+                {(modoAgregarProductos ? productosTemporales : pedido).map(item => (
                   <div key={item.id} className="item-card">
                     <div className="item-header">
                       <div className="item-info">
@@ -851,14 +896,14 @@ if (error) {
                     <div className="item-controls">
                       <div className="cantidad-control">
                         <button
-                          onClick={() => cambiarCantidad(item.id, -1)}
+                          onClick={() => modoAgregarProductos ? quitarProductoTemporal(item.id) : cambiarCantidad(item.id, -1)}
                           className="btn-cantidad btn-menos"
                         >
                           −
                         </button>
                         <span className="cantidad">{item.cantidad}</span>
                         <button
-                          onClick={() => cambiarCantidad(item.id, 1)}
+                          onClick={() => modoAgregarProductos ? agregarProductoTemporal(item) : cambiarCantidad(item.id, 1)}
                           className="btn-cantidad btn-mas"
                         >
                           +
@@ -881,10 +926,15 @@ if (error) {
             <div className="total-container">
               <span className="total-label">TOTAL</span>
               <span className="total-valor">
-                {formatearPrecio(calcularTotal())}
+                {formatearPrecio(
+                modoAgregarProductos 
+                ? productosTemporales.reduce((sum, p) => sum + (p.precio * p.cantidad), 0)
+                : calcularTotal()
+                )}
               </span>
             </div>
   
+            {!modoAgregarProductos && (
             <div className="pedido-footer-botones">
               <button
                 disabled={pedido.length === 0}
@@ -903,11 +953,11 @@ if (error) {
                 💳 Pagar Ahora
               </button>
             </div>
+          )}
+            </div>
   
             <p className="fase-label">Sistema de Órdenes Pendientes</p>
         </div>
-        </div>
-
         {mostrarPago && (
           <div className="modal-overlay">
             <div className="modal-pago">
@@ -1645,6 +1695,33 @@ if (vistaActual === 'pendientes') {
       </div>
 
     </div>
+    {/* FASE 3: Modal de Confirmación Cancelar */}
+{mostrarConfirmacionCancelar && ordenSeleccionada && (
+  <div className="modal-overlay" onClick={() => setMostrarConfirmacionCancelar(false)}>
+    <div className="modal-confirmacion-cancelar" onClick={(e) => e.stopPropagation()}>
+      <div className="icono-advertencia">⚠️</div>
+      <h2>¿Cancelar esta orden?</h2>
+      <p className="orden-a-cancelar">Orden #{ordenSeleccionada.numeroOrden}</p>
+      <p className="mensaje-advertencia">
+        Esta acción no se puede deshacer. La orden será marcada como cancelada.
+      </p>
+      <div className="modal-confirmacion-acciones">
+        <button 
+          className="btn-modal-no-cancelar"
+          onClick={() => setMostrarConfirmacionCancelar(false)}
+        >
+          No, mantener orden
+        </button>
+        <button 
+          className="btn-modal-si-cancelar"
+          onClick={cancelarOrdenPendiente}
+        >
+          Sí, cancelar orden
+        </button>
+      </div>
+    </div>
+  </div>
+)}
   </div>
 )}
     </div>
