@@ -8,15 +8,11 @@ import {
 import { 
   guardarOrdenPendiente,
   obtenerOrdenesPendientes,
-  obtenerProximoNumeroOrdenTotal,
-  actualizarOrdenPendiente,
-  cancelarOrden
+  obtenerProximoNumeroOrdenTotal
 } from './firebasePendientes';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { verificarPINSeguro, TIEMPO_SESION_MS } from './pinConfig';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { db } from './firebase';
 const ProductosMenu = {
   empanadas: [
     { id: 'e1', nombre: 'Arroz pollo', precio: 3000, descripcion: 'Empanada con arroz y pollo' },
@@ -229,7 +225,7 @@ export default function App() {
 
     cargarDatosIniciales();
   }, []);
-  // Verificar si la sesión sigue activa
+// Verificar si la sesión sigue activa
   const sesionActiva = () => {
     if (!autenticado || !tiempoAutenticacion) return false;
     const ahora = new Date().getTime();
@@ -789,6 +785,7 @@ const guardarComoPendiente = async () => {
   };
 
   const ventasFiltradas = filtrarVentas();
+  const ventasMostrar = sesionActiva() ? ventasFiltradas : filtrarVentasUltimas24h();
   const estadisticas = calcularEstadisticas();
 
   // ========================================
@@ -1698,7 +1695,6 @@ const guardarComoPendiente = async () => {
   // VISTA: HISTORIAL DE VENTAS
   // ========================================
 // Determinar si mostrar todas las ventas o solo últimas 24h
-  const ventasMostrar = sesionActiva() ? ventasFiltradas : filtrarVentasUltimas24h();
   return (
     <div className="app-container historial-view">
       <div className="historial-container">
