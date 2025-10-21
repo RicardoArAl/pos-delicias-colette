@@ -12,7 +12,8 @@ import {
   actualizarOrdenPendiente,
   cancelarOrden
 } from './firebasePendientes';
-
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { db } from './firebase';
 const ProductosMenu = {
   empanadas: [
     { id: 'e1', nombre: 'Arroz pollo', precio: 3000, descripcion: 'Empanada con arroz y pollo' },
@@ -43,9 +44,9 @@ const ProductosMenu = {
     { id: 's2', nombre: 'Mazorcada', precio: 25000, descripcion: 'Maíz tierno, proteína, tocineta, papa, papa chip, queso y plátano' }
   ],
   platos: [
-    { id: 'pl1', nombre: 'Carne a la Plancha', precio: 23000, descripcion: 'Carne con porción de papas y ensalada' },
+    { id: 'pl1', nombre: 'Chorizo con Arepa', precio: 7500, descripcion: 'Carne con porción de papas y ensalada' },
     { id: 'pl2', nombre: 'Pechuga a la Plancha', precio: 23000, descripcion: 'Pechuga con porción de papas y ensalada' },
-    { id: 'pl3', nombre: 'Chorizo con Arepa', precio: 7500, descripcion: 'Chorizo con arepa' },
+    { id: 'pl3', nombre: 'Carne a la Plancha', precio: 23000, descripcion: 'Chorizo con arepa' },
   ],
   bebidas: [
     { id: 'b1', nombre: 'Gaseosa Postobón', precio: 3000, descripcion: '' },
@@ -305,127 +306,141 @@ export default function App() {
   };
 
   const confirmarPago = async () => {
-    const esPagoPendiente = ordenSeleccionada !== null;
-    
-    if (metodoPago === 'efectivo') {
-      const cambio = calcularCambio();
-      if (cambio < 0) {
-        alert('El monto recibido es menor al total');
-        return;
-      }
+  const esPagoPendiente = ordenSeleccionada !== null;
+  
+  if (metodoPago === 'efectivo') {
+    const cambio = calcularCambio();
+    if (cambio < 0) {
+      alert('El monto recibido es menor al total');
+      return;
     }
+  }
 
-    try {
-      const nuevaOrden = esPagoPendiente 
-        ? ordenSeleccionada.numeroOrden 
-        : obtenerProximoNumeroOrdenFirebase(ventas);
-      const ahora = new Date();
-      
-      const venta = {
-        id: esPagoPendiente ? ordenSeleccionada.firebaseId : `venta-${Date.now()}`,
-        numeroOrden: nuevaOrden,
-        fecha: ahora.toISOString().split('T')[0],
-        hora: ahora.toTimeString().split(' ')[0],
-        productos: pedido.map(item => ({
-          id: item.id,
-          nombre: item.nombre,
-          precio: item.precio,
-          cantidad: item.cantidad
-        })),
+  try {
+    const nuevaOrden = esPagoPendiente 
+      ? ordenSeleccionada.numeroOrden 
+      : obtenerProximoNumeroOrdenFirebase(ventas);
+    
+    const ahora = new Date();
+    
+    const venta = {
+      id: esPagoPendiente ? ordenSeleccionada.id : `venta-${Date.now()}`,
+      numeroOrden: nuevaOrden,
+      fecha: ahora.toISOString().split('T')[0],
+      hora: ahora.toTimeString().split(' ')[0],
+      productos: pedido.map(item => ({
+        id: item.id,
+        nombre: item.nombre,
+        precio: item.precio,
+        cantidad: item.cantidad
+      })),
+      metodoPago: metodoPago,
+      montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
+      cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
+      total: calcularTotal()
+    };
+
+    await guardarVentaFirebase(venta);
+    
+    // ✅ Marcar orden como pagada si es pendiente
+    if (esPagoPendiente) {
+      const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
+      await updateDoc(ordenRef, {
+        estado: 'pagada',
         metodoPago: metodoPago,
         montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
         cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
-        total: calcularTotal()
-      };
+        fechaPago: venta.fecha,
+        horaPago: venta.hora
+      });
 
-      await guardarVentaFirebase(venta);
-
-      if (esPagoPendiente) {
-        await actualizarOrdenPendiente(ordenSeleccionada.firebaseId, {
-          estado: 'pagada',
-          metodoPago: metodoPago,
-          montoRecibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
-          cambio: metodoPago === 'efectivo' ? calcularCambio() : null,
-          fechaPago: venta.fecha,
-          horaPago: venta.hora
-        });
-
-        const pendientesActualizadas = await obtenerOrdenesPendientes();
-        setOrdenesPendientes(pendientesActualizadas);
-      }
-
-      const ventasActualizadas = await obtenerVentasFirebase();
-      setVentas(ventasActualizadas);
-      setTotalVentas(ventasActualizadas.length);
-      
-      setNumeroOrden(nuevaOrden);
-      setPagoExitoso(true);
-
-      setTimeout(() => {
-        setPagoExitoso(false);
-        setMostrarPago(false);
-        setPedido([]);
-        setMetodoPago('');
-        setMontoRecibido('');
-        setNumeroOrden(null);
-        setOrdenSeleccionada(null);
-      }, 3000);
-
-    } catch (error) {
-      console.error('❌ Error al procesar el pago:', error);
-      alert('Hubo un error al guardar la venta. Por favor, intenta de nuevo.');
+      const pendientesActualizadas = await obtenerOrdenesPendientes();
+      setOrdenesPendientes(pendientesActualizadas);
     }
-  };
+
+    const ventasActualizadas = await obtenerVentasFirebase();
+    setVentas(ventasActualizadas);
+    setTotalVentas(ventasActualizadas.length);
+    
+    setNumeroOrden(nuevaOrden);
+    setPagoExitoso(true);
+
+    setTimeout(() => {
+      setPagoExitoso(false);
+      setMostrarPago(false);
+      setPedido([]);
+      setMetodoPago('');
+      setMontoRecibido('');
+      setNumeroOrden(null);
+      setOrdenSeleccionada(null);
+    }, 3000);
+
+  } catch (error) {
+    console.error('❌ Error al procesar el pago:', error);
+    alert('Hubo un error al guardar la venta. Por favor, intenta de nuevo.');
+  }
+};
 
   // ========================================
   // FUNCIONES DE ÓRDENES PENDIENTES
   // ========================================
 
-  const guardarComoPendiente = async () => {
-    if (pedido.length === 0) {
-      alert('El pedido está vacío');
-      return;
-    }
+const guardarComoPendiente = async () => {
+  if (pedido.length === 0) {
+    alert('El pedido está vacío');
+    return;
+  }
 
-    try {
-      const nuevaOrden = obtenerProximoNumeroOrdenTotal(ventas, ordenesPendientes);
-      const ahora = new Date();
+  try {
+    const nuevaOrden = obtenerProximoNumeroOrdenTotal(ventas, ordenesPendientes);
+    const ahora = new Date();
+    
+    // ✅ ESTRUCTURA CORRECTA: usar "productos" directamente
+    const ordenPendiente = {
+      numeroOrden: nuevaOrden,
+      estado: 'pendiente',
+      fecha: ahora.toISOString().split('T')[0],
+      hora: ahora.toTimeString().split(' ')[0],
       
-      const ordenPendiente = {
-        numeroOrden: nuevaOrden,
-        estado: 'pendiente',
-        fecha: ahora.toISOString().split('T')[0],
-        hora: ahora.toTimeString().split(' ')[0],
-        productos: pedido.map(item => ({
-          id: item.id,
-          nombre: item.nombre,
-          precio: item.precio,
-          cantidad: item.cantidad
-        })),
-        total: calcularTotal(),
-        cantidadProductos: pedido.reduce((sum, item) => sum + item.cantidad, 0)
-      };
-
-      await guardarOrdenPendiente(ordenPendiente);
-
-      const pendientesActualizadas = await obtenerOrdenesPendientes();
-      setOrdenesPendientes(pendientesActualizadas);
+      // ✅ Usar "productos" en lugar de "itemsAgregados"
+      productos: pedido.map(item => ({
+        id: item.id,
+        nombre: item.nombre,
+        precio: item.precio,
+        cantidad: item.cantidad
+      })),
       
-      setNumeroOrdenPendiente(nuevaOrden);
-      setMostrarConfirmacionPendiente(true);
+      total: calcularTotal(),
+      cantidadProductos: pedido.reduce((sum, item) => sum + item.cantidad, 0),
+      
+      // Campos de pago (se llenarán cuando se pague)
+      metodoPago: null,
+      montoRecibido: null,
+      cambio: null,
+      fechaPago: null,
+      horaPago: null
+    };
 
-      setTimeout(() => {
-        setMostrarConfirmacionPendiente(false);
-        setPedido([]);
-        setNumeroOrdenPendiente(null);
-      }, 2000);
+    await guardarOrdenPendiente(ordenPendiente);
 
-      console.log('✅ Orden guardada como pendiente:', nuevaOrden);
-    } catch (error) {
-      console.error('❌ Error al guardar orden pendiente:', error);
-      alert('Hubo un error al guardar la orden. Por favor, intenta de nuevo.');
-    }
-  };
+    const pendientesActualizadas = await obtenerOrdenesPendientes();
+    setOrdenesPendientes(pendientesActualizadas);
+    
+    setNumeroOrdenPendiente(nuevaOrden);
+    setMostrarConfirmacionPendiente(true);
+
+    setTimeout(() => {
+      setMostrarConfirmacionPendiente(false);
+      setPedido([]);
+      setNumeroOrdenPendiente(null);
+    }, 2000);
+
+    console.log('✅ Orden guardada como pendiente:', nuevaOrden);
+  } catch (error) {
+    console.error('❌ Error al guardar orden pendiente:', error);
+    alert('Hubo un error al guardar la orden. Por favor, intenta de nuevo.');
+  }
+};
 
   const abrirDetalleOrden = (orden) => {
     setOrdenSeleccionada(orden);
@@ -440,11 +455,19 @@ export default function App() {
   };
 
   const procesarPagoPendiente = (orden) => {
-    setPedido(orden.productos);
-    setOrdenSeleccionada(orden);
-    setMostrarDetalleOrden(false);
-    setMostrarPago(true);
-  };
+  // ✅ Validar que productos exista y sea un array
+  const productosOrden = orden.productos || [];
+  
+  if (productosOrden.length === 0) {
+    alert('Esta orden no tiene productos asociados');
+    return;
+  }
+  
+  setPedido(productosOrden);
+  setOrdenSeleccionada(orden);
+  setMostrarDetalleOrden(false);
+  setMostrarPago(true);
+};
 
   const solicitarCancelarOrden = (orden) => {
     setOrdenSeleccionada(orden);
@@ -452,24 +475,28 @@ export default function App() {
   };
 
   const cancelarOrdenPendiente = async () => {
-    try {
-      await cancelarOrden(ordenSeleccionada.firebaseId);
+  try {
+    const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
+    await updateDoc(ordenRef, {
+      estado: 'cancelada',
+      fechaCancelacion: new Date().toISOString().split('T')[0],
+      horaCancelacion: new Date().toTimeString().split(' ')[0]
+    });
 
-      const pendientesActualizadas = await obtenerOrdenesPendientes();
-      setOrdenesPendientes(pendientesActualizadas);
+    const pendientesActualizadas = await obtenerOrdenesPendientes();
+    setOrdenesPendientes(pendientesActualizadas);
 
-      setMostrarConfirmacionCancelar(false);
-      setMostrarDetalleOrden(false);
-      setOrdenSeleccionada(null);
+    setMostrarConfirmacionCancelar(false);
+    setMostrarDetalleOrden(false);
+    setOrdenSeleccionada(null);
 
-      alert('✅ Orden cancelada');
+    alert('✅ Orden cancelada');
 
-    } catch (error) {
-      console.error('Error al cancelar orden:', error);
-      alert('❌ Error al cancelar orden');
-    }
-  };
-
+  } catch (error) {
+    console.error('Error al cancelar orden:', error);
+    alert('❌ Error al cancelar orden');
+  }
+};
   // ========================================
   // FUNCIONES DE AGREGAR PRODUCTOS A ORDEN
   // ========================================
@@ -516,47 +543,52 @@ export default function App() {
   };
 
   const confirmarProductosAgregados = async () => {
-    if (productosTemporales.length === 0) {
-      alert('Debes agregar al menos un producto');
-      return;
-    }
+  if (productosTemporales.length === 0) {
+    alert('Debes agregar al menos un producto');
+    return;
+  }
 
-    try {
-      const productosActualizados = [...ordenSeleccionada.productos];
+  try {
+    // ✅ Validar que productos exista
+    const productosActuales = ordenSeleccionada.productos || [];
+    const productosActualizados = [...productosActuales];
+    
+    productosTemporales.forEach(nuevoProducto => {
+      const existente = productosActualizados.find(p => p.id === nuevoProducto.id);
       
-      productosTemporales.forEach(nuevoProducto => {
-        const existente = productosActualizados.find(p => p.id === nuevoProducto.id);
-        
-        if (existente) {
-          existente.cantidad += nuevoProducto.cantidad;
-        } else {
-          productosActualizados.push(nuevoProducto);
-        }
-      });
+      if (existente) {
+        existente.cantidad += nuevoProducto.cantidad;
+      } else {
+        productosActualizados.push(nuevoProducto);
+      }
+    });
 
-      const nuevoTotal = productosActualizados.reduce((sum, p) => 
-        sum + (p.precio * p.cantidad), 0
-      );
+    const nuevoTotal = productosActualizados.reduce((sum, p) => 
+      sum + (p.precio * p.cantidad), 0
+    );
 
-      await actualizarOrdenPendiente(ordenSeleccionada.firebaseId, {
-        productos: productosActualizados,
-        total: nuevoTotal
-      });
+    const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
+    await updateDoc(ordenRef, {
+      productos: productosActualizados,
+      total: nuevoTotal,
+      cantidadProductos: productosActualizados.reduce((sum, p) => sum + p.cantidad, 0),
+      ultimaActualizacion: Timestamp.now()
+    });
 
-      const pendientesActualizadas = await obtenerOrdenesPendientes();
-      setOrdenesPendientes(pendientesActualizadas);
+    const pendientesActualizadas = await obtenerOrdenesPendientes();
+    setOrdenesPendientes(pendientesActualizadas);
 
-      setModoAgregarProductos(false);
-      setProductosTemporales([]);
-      setVistaActual('pendientes');
-      alert('✅ Productos agregados exitosamente');
+    setModoAgregarProductos(false);
+    setProductosTemporales([]);
+    setOrdenSeleccionada(null);
+    setVistaActual('pendientes');
+    alert('✅ Productos agregados exitosamente');
 
-    } catch (error) {
-      console.error('Error al agregar productos:', error);
-      alert('❌ Error al agregar productos');
-    }
-  };
-
+  } catch (error) {
+    console.error('Error al agregar productos:', error);
+    alert('❌ Error al agregar productos');
+  }
+};
   // ========================================
   // FUNCIONES DE FILTROS Y ESTADÍSTICAS
   // ========================================
@@ -1353,18 +1385,25 @@ export default function App() {
                       </div>
 
                       <div className="orden-pendiente-productos">
-                        {orden.productos && orden.productos.slice(0, 3).map((prod, idx) => (
-                          <div key={idx} className="producto-mini">
-                            <span className="producto-mini-cantidad">{prod.cantidad}x</span>
-                            <span className="producto-mini-nombre">{prod.nombre}</span>
-                          </div>
-                        ))}
-                        {orden.productos && orden.productos.length > 3 && (
-                          <div className="producto-mini-mas">
-                            +{orden.productos.length - 3} más
-                          </div>
-                        )}
-                      </div>
+                        {/* ✅ Validar que productos exista */}
+                        {orden.productos && orden.productos.length > 0 ? (
+                          <>
+                            {orden.productos.slice(0, 3).map((prod, pIdx) => (
+                              <div key={pIdx} className="producto-mini">
+                                <span className="producto-mini-cantidad">{prod.cantidad}x</span>
+                                <span className="producto-mini-nombre">{prod.nombre}</span>
+                              </div>
+                            ))}
+                            {orden.productos.length > 3 && (
+                              <div className="producto-mini-mas">
+                                +{orden.productos.length - 3} más
+                              </div>
+                            )}
+                          </>
+  ) : (
+    <div className="producto-mini-mas">Sin productos</div>
+  )}
+</div>
 
                       <div className="orden-pendiente-total">
                         <span className="total-label-pendiente">Total</span>
@@ -1376,31 +1415,41 @@ export default function App() {
                       <div className="orden-acciones">
                         <button 
                           className="btn-detalle"
-                          onClick={() => abrirDetalleOrden(orden)}
+                          onClick={(e) => {
+                          e.stopPropagation();
+                          abrirDetalleOrden(orden);
+                        }}
                         >
                           👁️ Ver Detalle
                         </button>
-  
+
                         <button 
                           className="btn-agregar"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setOrdenSeleccionada(orden);
                             iniciarAgregarProductos();
                           }}
                         >
                           ➕ Agregar
                         </button>
-  
+
                         <button 
                           className="btn-pagar"
-                          onClick={() => procesarPagoPendiente(orden)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            procesarPagoPendiente(orden);
+                          }}
                         >
                           💳 Pagar
                         </button>
-  
+
                         <button 
                           className="btn-cancelar"
-                          onClick={() => solicitarCancelarOrden(orden)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            solicitarCancelarOrden(orden);
+                          }}
                         >
                           ❌ Cancelar
                         </button>
@@ -1415,75 +1464,98 @@ export default function App() {
 
         {/* Modal de detalle de orden */}
         {mostrarDetalleOrden && ordenSeleccionada && (
-          <div className="modal-overlay" onClick={cerrarDetalleOrden}>
-            <div className="modal-detalle-orden" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-detalle-header">
-                <h2>📋 Orden #{ordenSeleccionada.numeroOrden}</h2>
-                <button className="btn-cerrar-modal" onClick={cerrarDetalleOrden}>✕</button>
-              </div>
+  <div className="modal-overlay" onClick={cerrarDetalleOrden}>
+    <div className="modal-detalle-orden" onClick={(e) => e.stopPropagation()}>
+      
+      <div className="modal-detalle-header">
+        <h2>📋 Orden #{ordenSeleccionada.numeroOrden}</h2>
+        <button className="btn-cerrar-modal" onClick={cerrarDetalleOrden}>✕</button>
+      </div>
 
-              <div className="modal-detalle-info">
-                <div className="info-item">
-                  <span className="info-label">📅 Fecha:</span>
-                  <span>{ordenSeleccionada.fecha}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">🕐 Hora:</span>
-                  <span>{ordenSeleccionada.hora}</span>
-                </div>
-              </div>
+      <div className="modal-detalle-info">
+        <div className="info-item">
+          <span className="info-label">📅 Fecha:</span>
+          <span>{ordenSeleccionada.fecha}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">🕐 Hora:</span>
+          <span>{ordenSeleccionada.hora}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">⏱️ Tiempo:</span>
+          <span>
+            {(() => {
+              const ahora = new Date();
+              const creacion = ordenSeleccionada.fechaCreacion?.toDate() || new Date();
+              const diffMs = ahora - creacion;
+              const diffMins = Math.floor(diffMs / 60000);
+              if (diffMins < 60) return `${diffMins} min`;
+              const diffHours = Math.floor(diffMins / 60);
+              return `${diffHours}h ${diffMins % 60}m`;
+            })()}
+          </span>
+        </div>
+      </div>
 
-              <div className="modal-detalle-productos">
-                <h3>Productos:</h3>
-                {ordenSeleccionada.productos && ordenSeleccionada.productos.map((prod, index) => (
-                  <div key={index} className="detalle-producto-item">
-                    <span className="prod-cantidad">{prod.cantidad}x</span>
-                    <span className="prod-nombre">{prod.nombre}</span>
-                    <span className="prod-precio">
-                      {formatearPrecio(prod.precio * prod.cantidad)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="modal-detalle-total">
-                <span>TOTAL:</span>
-                <span className="total-valor">
-                  {formatearPrecio(ordenSeleccionada.total)}
-                </span>
-              </div>
-
-              <div className="modal-detalle-acciones">
-                <button 
-                  className="btn-modal-agregar"
-                  onClick={() => {
-                    setMostrarDetalleOrden(false);
-                    iniciarAgregarProductos();
-                  }}
-                >
-                  ➕ Agregar Productos
-                </button>
-                
-                <button 
-                  className="btn-modal-pagar"
-                  onClick={() => procesarPagoPendiente(ordenSeleccionada)}
-                >
-                  💳 Procesar Pago
-                </button>
-                
-                <button 
-                  className="btn-modal-cancelar"
-                  onClick={() => {
-                    setMostrarDetalleOrden(false);
-                    solicitarCancelarOrden(ordenSeleccionada);
-                  }}
-                >
-                  ❌ Cancelar Orden
-                </button>
-              </div>
+      {/* ✅ Validación de productos */}
+      <div className="modal-detalle-productos">
+        <h3>Productos:</h3>
+        {ordenSeleccionada.productos && ordenSeleccionada.productos.length > 0 ? (
+          ordenSeleccionada.productos.map((prod, index) => (
+            <div key={index} className="detalle-producto-item">
+              <span className="prod-cantidad">{prod.cantidad}x</span>
+              <span className="prod-nombre">{prod.nombre}</span>
+              <span className="prod-precio">
+                {formatearPrecio(prod.precio * prod.cantidad)}
+              </span>
             </div>
-          </div>
+          ))
+        ) : (
+          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>
+            No hay productos en esta orden
+          </p>
         )}
+      </div>
+
+      <div className="modal-detalle-total">
+        <span>TOTAL:</span>
+        <span className="total-valor">
+          {formatearPrecio(ordenSeleccionada.total)}
+        </span>
+      </div>
+
+      <div className="modal-detalle-acciones">
+        <button 
+          className="btn-modal-agregar"
+          onClick={() => {
+            setMostrarDetalleOrden(false);
+            iniciarAgregarProductos();
+          }}
+        >
+          ➕ Agregar Productos
+        </button>
+        
+        <button 
+          className="btn-modal-pagar"
+          onClick={() => procesarPagoPendiente(ordenSeleccionada)}
+        >
+          💳 Procesar Pago
+        </button>
+        
+        <button 
+          className="btn-modal-cancelar"
+          onClick={() => {
+            setMostrarDetalleOrden(false);
+            solicitarCancelarOrden(ordenSeleccionada);
+          }}
+        >
+          ❌ Cancelar Orden
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
 
         {/* Modal de confirmación de cancelación */}
         {mostrarConfirmacionCancelar && ordenSeleccionada && (
