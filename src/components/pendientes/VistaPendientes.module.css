@@ -26,31 +26,6 @@
   margin: 0;
 }
 
-/* ========== FILTRO DE CLIENTES ========== */
-
-.filtroClientesMini {
-  flex-shrink: 0;
-}
-
-.selectFiltroCliente {
-  padding: 8px 12px;
-  border: 2px solid var(--borde-claro);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  background: white;
-  transition: border-color 0.2s;
-}
-
-.selectFiltroCliente:hover {
-  border-color: var(--borde-medio);
-}
-
-.selectFiltroCliente:focus {
-  outline: none;
-  border-color: var(--azul-info);
-}
-
 /* ========== SIN PENDIENTES ========== */
 
 .sinPendientes {
@@ -102,34 +77,11 @@
   border-bottom: 2px solid var(--borde-claro);
 }
 
-.ordenHeaderLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .ordenHeader h3 {
   font-size: 1.25rem;
   color: var(--texto-oscuro);
   font-weight: 700;
   margin: 0;
-}
-
-/* ========== BADGE DE CLIENTE ========== */
-
-.badgeCliente {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border-radius: 8px;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* ========== TIEMPO TRANSCURRIDO ========== */
@@ -140,6 +92,38 @@
   color: white;
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+/* ========== INFO DEL CLIENTE EN TARJETA ========== */
+
+.clienteInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: var(--spacing-sm);
+}
+
+.avatarCliente {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nombreCliente {
+  font-weight: bold;
+  margin: 0;
+  color: var(--texto-oscuro);
+  font-size: 0.95rem;
 }
 
 /* ========== INFO DE LA ORDEN ========== */
@@ -176,6 +160,7 @@
   font-weight: 600;
   background: var(--bg-gris-claro);
   color: var(--texto-oscuro);
+  transition: all 0.2s;
 }
 
 .ordenAcciones button:hover {
@@ -192,73 +177,6 @@
   background: var(--verde-hover) !important;
 }
 
-/* ========== RESUMEN POR CLIENTES ========== */
-
-.resumenClientes {
-  margin-top: 30px;
-  padding: 20px;
-  background: var(--bg-gris-claro);
-  border-radius: 12px;
-}
-
-.resumenClientes h3 {
-  margin: 0 0 15px 0;
-  color: var(--texto-oscuro);
-  font-size: 1.1rem;
-}
-
-.gridResumenClientes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.tarjetaResumenCliente {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 10px;
-  border: 2px solid var(--borde-claro);
-  transition: all 0.2s;
-}
-
-.tarjetaResumenCliente:hover {
-  border-color: var(--borde-medio);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-}
-
-.iconoClienteResumen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.infoClienteResumen {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.nombreClienteResumen {
-  font-weight: 600;
-  color: var(--texto-oscuro);
-  font-size: 0.95rem;
-}
-
-.datosClienteResumen {
-  font-size: 0.85rem;
-  color: var(--gris-medio);
-}
-
 /* ========== RESPONSIVE ========== */
 
 /* Tablet pequeño */
@@ -272,19 +190,7 @@
     align-items: stretch;
   }
   
-  .filtroClientesMini {
-    width: 100%;
-  }
-  
-  .selectFiltroCliente {
-    width: 100%;
-  }
-  
   .gridPendientes {
-    grid-template-columns: 1fr;
-  }
-  
-  .gridResumenClientes {
     grid-template-columns: 1fr;
   }
 }
@@ -297,5 +203,13 @@
   
   .headerPendientes h2 {
     font-size: 1.5rem;
+  }
+  
+  .ordenAcciones {
+    flex-direction: column;
+  }
+  
+  .ordenAcciones button {
+    width: 100%;
   }
 }

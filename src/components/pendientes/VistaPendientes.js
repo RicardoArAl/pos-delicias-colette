@@ -42,9 +42,12 @@ const VistaPendientes = ({
                   </span>
                 </div>
                 
-                {/* CLIENTE VISIBLE */}
+                {/* CLIENTE VISIBLE CON AVATAR */}
                 <div className={styles.clienteInfo}>
-                  <div className={styles.avatarCliente} style={{ background: cliente.color }}>
+                  <div 
+                    className={styles.avatarCliente} 
+                    style={{ backgroundColor: cliente.color }}
+                  >
                     {cliente.iniciales || '👤'}
                   </div>
                   <div>

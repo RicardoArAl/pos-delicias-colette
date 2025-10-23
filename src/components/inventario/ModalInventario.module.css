@@ -1,314 +1,284 @@
 /* ════════════════════════════════════════════════════════════════════
-   📍 UBICACIÓN: src/components/inventario/VistaInventario.module.css
-   📦 Estilos de la vista principal de inventario
+   📍 UBICACIÓN: src/components/inventario/ModalInventario.module.css
+   📝 Estilos del modal de actualización de inventario
    ════════════════════════════════════════════════════════════════════ */
 
-.vistaInventario {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+/* ========== OVERLAY DEL MODAL ========== */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+  padding: var(--spacing-lg);
 }
 
-/* ========== HEADER ========== */
+/* ========== CONTENEDOR DEL MODAL ========== */
 
-.inventarioHeader {
-  margin-bottom: 30px;
+.modalInventario {
+  background: var(--bg-blanco);
+  border-radius: var(--radius-xl);
+  width: 90%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-xl);
+  animation: slideUp 0.3s ease;
 }
 
-.inventarioHeaderTop {
+/* ========== HEADER DEL MODAL ========== */
+
+.modalInventarioHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  gap: 20px;
+  padding: var(--spacing-lg);
+  border-bottom: 2px solid var(--borde-claro);
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
-.inventarioHeaderTop h2 {
-  margin: 0;
-  font-size: 2rem;
-  color: #1f2937;
+.modalInventarioHeader h2 {
+  font-size: 1.5rem;
+  color: var(--texto-oscuro);
   font-weight: 700;
+  margin: 0;
 }
 
-/* ========== BOTÓN SINCRONIZAR ========== */
-
-.btnSincronizar {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.botonCerrar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: var(--rojo-primario);
   color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  white-space: nowrap;
-}
-
-.btnSincronizar:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-}
-
-.btnSincronizar:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.btnSincronizar:disabled {
-  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-  cursor: not-allowed;
-  opacity: 0.7;
-  box-shadow: none;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* ========== FILTROS ========== */
-
-.filtrosInventario {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.filtrosInventario button {
-  padding: 10px 20px;
-  border: 2px solid var(--borde-claro);
-  background: white;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--gris-medio);
+  transition: all 0.2s;
+  border: none;
+  padding: 0;
 }
 
-.filtrosInventario button:hover {
-  border-color: var(--borde-medio);
+.botonCerrar:hover {
+  background: var(--rojo-hover);
+  transform: rotate(90deg);
+}
+
+/* ========== CONTENIDO DEL MODAL ========== */
+
+.modalInventarioContenido {
+  padding: var(--spacing-xl);
+}
+
+/* ========== INFO DEL INGREDIENTE ========== */
+
+.infoIngrediente {
   background: var(--bg-gris-claro);
-  transform: translateY(-1px);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
-.filtrosInventario button.activo {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border-color: #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-/* ========== GRID DE INVENTARIO ========== */
-
-.gridInventario {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-/* ========== TARJETA DE INVENTARIO ========== */
-
-.tarjetaInventario {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--sombra-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  border: 3px solid transparent;
-  animation: fadeInUp 0.3s ease;
-}
-
-.tarjetaInventario:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--sombra-lg);
-}
-
-/* Estados de stock */
-.tarjetaInventario.normal {
-  border-color: var(--verde-exito);
-}
-
-.tarjetaInventario.normal:hover {
-  border-color: var(--verde-hover);
-}
-
-.tarjetaInventario.bajo {
-  border-color: var(--naranja-advertencia);
-  background: #fffbeb;
-}
-
-.tarjetaInventario.bajo:hover {
-  border-color: var(--naranja-hover);
-}
-
-.tarjetaInventario.agotado {
-  border-color: #ef4444;
-  background: #fee2e2;
-}
-
-.tarjetaInventario.agotado:hover {
-  border-color: #dc2626;
-}
-
-/* ========== INFO DEL INVENTARIO ========== */
-
-.inventarioInfo h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.inventarioInfo .categoria {
-  margin: 0 0 12px 0;
-  font-size: 0.875rem;
-  color: var(--gris-medio);
-  font-weight: 500;
-}
-
-.inventarioStock {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 16px 0;
-}
-
-.stockActual {
-  font-size: 2.5rem;
+.infoIngrediente h3 {
+  font-size: 1.375rem;
+  color: var(--texto-oscuro);
+  margin: 0 0 var(--spacing-sm) 0;
   font-weight: 700;
-  color: var(--rojo-primario);
 }
 
-.tarjetaInventario.agotado .stockActual {
-  color: #ef4444;
-}
-
-.tarjetaInventario.bajo .stockActual {
-  color: var(--naranja-advertencia);
-}
-
-.stockUnidad {
+.infoIngrediente p {
+  margin: var(--spacing-xs) 0;
+  color: var(--texto-medio);
   font-size: 1rem;
-  color: var(--gris-medio);
-  font-weight: 500;
 }
 
-.stockMinimo {
-  font-size: 0.875rem;
-  color: var(--gris-medio);
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--borde-claro);
-}
-
-/* ========== BADGES DE ESTADO ========== */
-
-.badgeAgotado,
-.badgeBajo {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+.infoIngrediente strong {
+  color: var(--texto-oscuro);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.badgeAgotado {
-  background: #ef4444;
+/* ========== DISPLAY DE STOCK ========== */
+
+.stockDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-lg);
+}
+
+.inputStock {
+  flex: 1;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  padding: var(--spacing-md);
+  border: 3px solid var(--borde-medio);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--texto-oscuro);
+}
+
+.inputStock:focus {
+  outline: none;
+  border-color: var(--azul-info);
+}
+
+.unidadLabel {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--texto-medio);
+  min-width: 80px;
+}
+
+/* ========== BOTONES RÁPIDOS ========== */
+
+.botonesRapidos {
+  margin-bottom: var(--spacing-lg);
+}
+
+.botonesRapidos h4 {
+  font-size: 1rem;
+  color: var(--texto-oscuro);
+  margin: 0 0 var(--spacing-sm) 0;
+  font-weight: 600;
+}
+
+.gridBotonesStock {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.gridBotonesStock button {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: var(--azul-info);
+  color: white;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.gridBotonesStock button:hover {
+  background: var(--azul-hover);
+  transform: translateY(-2px);
+}
+
+.gridBotonesStock button:active {
+  transform: translateY(0);
+}
+
+.botonCero {
+  background: var(--rojo-primario) !important;
+  grid-column: span 3;
+}
+
+.botonCero:hover {
+  background: var(--rojo-hover) !important;
+}
+
+/* ========== ACCIONES ========== */
+
+.accionesInventario {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.accionesInventario button {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.botonCancelar {
+  background: var(--gris-medio);
   color: white;
 }
 
-.badgeBajo {
-  background: var(--naranja-advertencia);
+.botonCancelar:hover {
+  background: var(--gris-hover);
+  transform: translateY(-2px);
+}
+
+.botonGuardar {
+  background: var(--verde-exito);
   color: white;
+}
+
+.botonGuardar:hover {
+  background: var(--verde-hover);
+  transform: translateY(-2px);
 }
 
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
-  .vistaInventario {
-    padding: 16px;
+  .modalInventario {
+    width: 95%;
+    max-width: none;
   }
-
-  .inventarioHeaderTop {
-    flex-direction: column;
-    align-items: flex-start;
+  
+  .modalInventarioHeader {
+    padding: var(--spacing-md);
   }
-
-  .inventarioHeaderTop h2 {
-    font-size: 1.5rem;
+  
+  .modalInventarioContenido {
+    padding: var(--spacing-md);
   }
-
-  .btnSincronizar {
-    width: 100%;
-    justify-content: center;
-    font-size: 0.95rem;
-    padding: 14px 20px;
+  
+  .gridBotonesStock {
+    grid-template-columns: repeat(2, 1fr);
   }
-
-  .filtrosInventario {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .filtrosInventario button {
-    flex: 1;
-    min-width: 120px;
-  }
-
-  .gridInventario {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-  }
-
-  .tarjetaInventario {
-    padding: 16px;
-  }
-
-  .stockActual {
-    font-size: 2rem;
+  
+  .botonCero {
+    grid-column: span 2;
   }
 }
 
 @media (max-width: 480px) {
-  .inventarioHeaderTop h2 {
+  .modalInventarioHeader h2 {
     font-size: 1.25rem;
   }
-
-  .filtrosInventario button {
-    font-size: 0.875rem;
-    padding: 8px 16px;
-    flex: 1 1 auto;
-    min-width: 100px;
+  
+  .inputStock {
+    font-size: 1.5rem;
   }
-
-  .gridInventario {
+  
+  .accionesInventario {
+    flex-direction: column;
+  }
+  
+  .accionesInventario button {
+    width: 100%;
+  }
+  
+  .gridBotonesStock {
     grid-template-columns: 1fr;
   }
-
-  .tarjetaInventario {
-    padding: 14px;
-  }
-
-  .inventarioInfo h3 {
-    font-size: 1.125rem;
-  }
-
-  .stockActual {
-    font-size: 1.75rem;
-  }
-
-  .badgeAgotado,
-  .badgeBajo {
-    font-size: 0.65rem;
-    padding: 4px 8px;
+  
+  .botonCero {
+    grid-column: span 1;
   }
 }

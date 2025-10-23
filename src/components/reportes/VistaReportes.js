@@ -1,7 +1,8 @@
 // src/components/reportes/VistaReportes.js
 import React from 'react';
-import { obtenerVentasFiltradas, exportarCSV, calcularEstadisticas } from '../../utils/helpers';
+import { obtenerVentasFiltradas, exportarCSV } from '../../utils/helpers';
 import { calcularEstadisticas as calcularStats } from '../../utils/calculos';
+import styles from './VistaReportes.module.css';
 
 const VistaReportes = ({
   filtroHistorial,
@@ -17,64 +18,78 @@ const VistaReportes = ({
   };
 
   return (
-    <div className="vista-reportes">
+    <div className={styles.vistaReportes}>
       <h2>📈 Reportes y Estadísticas</h2>
 
-      <div className="filtros-reportes">
+      {/* FILTROS DE TIEMPO */}
+      <div className={styles.filtrosReportes}>
         <button
-          className={filtroHistorial === 'hoy' ? 'activo' : ''}
+          className={filtroHistorial === 'hoy' ? styles.activo : ''}
           onClick={() => setFiltroHistorial('hoy')}
         >
           Hoy
         </button>
         <button
-          className={filtroHistorial === 'semana' ? 'activo' : ''}
+          className={filtroHistorial === 'semana' ? styles.activo : ''}
           onClick={() => setFiltroHistorial('semana')}
         >
           Esta Semana
         </button>
         <button
-          className={filtroHistorial === 'mes' ? 'activo' : ''}
+          className={filtroHistorial === 'mes' ? styles.activo : ''}
           onClick={() => setFiltroHistorial('mes')}
         >
           Este Mes
         </button>
         <button
-          className={filtroHistorial === 'todas' ? 'activo' : ''}
+          className={filtroHistorial === 'todas' ? styles.activo : ''}
           onClick={() => setFiltroHistorial('todas')}
         >
           Todas
         </button>
       </div>
 
-      <div className="grid-estadisticas">
-        <div className="tarjeta-estadistica">
+      {/* GRID DE ESTADÍSTICAS */}
+      <div className={styles.gridEstadisticas}>
+        <div className={styles.tarjetaEstadistica}>
           <h3>💰 Total Vendido</h3>
-          <p className="valor-grande">${estadisticas.totalVendido.toLocaleString()}</p>
+          <p className={styles.valorGrande}>
+            ${estadisticas.totalVendido.toLocaleString()}
+          </p>
         </div>
 
-        <div className="tarjeta-estadistica">
+        <div className={styles.tarjetaEstadistica}>
           <h3>🛒 Número de Órdenes</h3>
-          <p className="valor-grande">{estadisticas.numeroOrdenes}</p>
+          <p className={styles.valorGrande}>{estadisticas.numeroOrdenes}</p>
         </div>
 
-        <div className="tarjeta-estadistica">
+        <div className={styles.tarjetaEstadistica}>
           <h3>📊 Promedio por Venta</h3>
-          <p className="valor-grande">${Math.round(estadisticas.promedioVenta).toLocaleString()}</p>
+          <p className={styles.valorGrande}>
+            ${Math.round(estadisticas.promedioVenta).toLocaleString()}
+          </p>
         </div>
 
-        <div className="tarjeta-estadistica">
+        <div className={styles.tarjetaEstadistica}>
           <h3>💵 Efectivo</h3>
-          <p className="valor-grande">${estadisticas.porEfectivo.toLocaleString()}</p>
+          <p className={styles.valorGrande}>
+            ${estadisticas.porEfectivo.toLocaleString()}
+          </p>
         </div>
 
-        <div className="tarjeta-estadistica">
+        <div className={styles.tarjetaEstadistica}>
           <h3>💳 Transferencia</h3>
-          <p className="valor-grande">${estadisticas.porTransferencia.toLocaleString()}</p>
+          <p className={styles.valorGrande}>
+            ${estadisticas.porTransferencia.toLocaleString()}
+          </p>
         </div>
       </div>
 
-      <button className="boton-exportar-reportes" onClick={handleExportar}>
+      {/* BOTÓN EXPORTAR */}
+      <button
+        className={styles.botonExportarReportes}
+        onClick={handleExportar}
+      >
         📥 Exportar Reporte CSV
       </button>
     </div>

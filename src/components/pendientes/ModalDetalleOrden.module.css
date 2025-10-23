@@ -42,6 +42,49 @@
   font-weight: 700;
 }
 
+/* ========== INFO DEL CLIENTE EN MODAL ========== */
+
+.infoClienteModal {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.avatarClienteGrande {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.datosCliente {
+  flex: 1;
+}
+
+.nombreClienteGrande {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 0;
+  color: var(--texto-oscuro);
+}
+
+.labelCliente {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
 /* ========== INFO DE LA ORDEN ========== */
 
 .infoOrden {
@@ -247,6 +290,11 @@
   font-weight: 700;
 }
 
+.iconoAgotado {
+  color: #ef4444;
+  font-weight: bold;
+}
+
 /* Lista de productos nuevos */
 .productosNuevosLista {
   background: var(--bg-gris-claro);
@@ -307,6 +355,30 @@
   border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 700;
+}
+
+.botonConfirmar {
+  background: var(--verde-exito) !important;
+  color: white !important;
+}
+
+.botonConfirmar:hover {
+  background: var(--verde-hover) !important;
+}
+
+.botonConfirmar:disabled {
+  background: var(--gris-medio) !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.botonCancelar {
+  background: var(--rojo-primario) !important;
+  color: white !important;
+}
+
+.botonCancelar:hover {
+  background: var(--rojo-hover) !important;
 }
 
 /* ========== RESPONSIVE ========== */

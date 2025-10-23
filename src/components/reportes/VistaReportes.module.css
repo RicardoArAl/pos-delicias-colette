@@ -1,149 +1,154 @@
 /* ════════════════════════════════════════════════════════════════════
-   📍 UBICACIÓN: src/components/historial/ModalDetalleVenta.module.css
-   📄 Estilos del modal de detalle de venta
+   📍 UBICACIÓN: src/components/reportes/VistaReportes.module.css
+   📊 Estilos de la vista de reportes y estadísticas
    ════════════════════════════════════════════════════════════════════ */
 
-/* ========== OVERLAY DEL MODAL ========== */
-
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
+.vistaReportes {
   padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-/* ========== MODAL ========== */
-
-.modalDetalle {
-  background: var(--bg-blanco);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--sombra-xl);
-  animation: slideUp 0.3s ease;
-}
-
-.modalDetalle h2 {
-  font-size: 1.75rem;
-  color: var(--texto-oscuro);
-  margin-bottom: var(--spacing-lg);
-  font-weight: 700;
-}
-
-/* ========== INFO DE LA VENTA ========== */
-
-.infoVenta {
-  background: var(--bg-gris-claro);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-}
-
-.infoVenta p {
-  margin-bottom: var(--spacing-sm);
-  font-size: 1rem;
-  color: var(--texto-medio);
-}
-
-.infoVenta p strong {
-  color: var(--texto-oscuro);
-  font-weight: 600;
-}
-
-/* ========== PRODUCTOS ========== */
-
-.productosVenta {
-  margin-bottom: var(--spacing-lg);
-}
-
-.productosVenta h3 {
-  font-size: 1.25rem;
-  color: var(--texto-oscuro);
-  margin-bottom: var(--spacing-md);
-  font-weight: 700;
-}
-
-.productoDetalle {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-gris-claro);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-xs);
-  font-size: 1rem;
-}
-
-.productoDetalle span:first-child {
-  color: var(--texto-oscuro);
-  font-weight: 600;
-}
-
-.productoDetalle span:last-child {
-  color: var(--rojo-primario);
-  font-weight: 700;
-}
-
-/* ========== TOTAL ========== */
-
-.totalVentaDetalle {
-  background: var(--bg-gris-claro);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-  text-align: center;
-}
-
-.totalVentaDetalle h3 {
+.vistaReportes h2 {
   font-size: 1.875rem;
-  color: var(--rojo-primario);
+  color: var(--texto-oscuro);
+  font-weight: 700;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ========== FILTROS ========== */
+
+.filtrosReportes {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.filtrosReportes button {
+  background: var(--bg-gris-claro);
+  color: var(--texto-oscuro);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.filtrosReportes button:hover {
+  background: var(--bg-gris);
+  transform: translateY(-2px);
+}
+
+.filtrosReportes button.activo {
+  background: var(--morado);
+  color: white;
+}
+
+/* ========== GRID DE ESTADÍSTICAS ========== */
+
+.gridEstadisticas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ========== TARJETA DE ESTADÍSTICA ========== */
+
+.tarjetaEstadistica {
+  background: var(--bg-blanco);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--sombra-md);
+  text-align: center;
+  transition: all var(--transition-normal);
+  border-top: 4px solid var(--rojo-primario);
+}
+
+.tarjetaEstadistica:hover {
+  box-shadow: var(--sombra-xl);
+  transform: translateY(-4px);
+}
+
+.tarjetaEstadistica:nth-child(2) {
+  border-top-color: var(--azul-info);
+}
+
+.tarjetaEstadistica:nth-child(3) {
+  border-top-color: var(--morado);
+}
+
+.tarjetaEstadistica:nth-child(4) {
+  border-top-color: var(--verde-exito);
+}
+
+.tarjetaEstadistica:nth-child(5) {
+  border-top-color: var(--naranja-advertencia);
+}
+
+.tarjetaEstadistica h3 {
+  font-size: 1.125rem;
+  color: var(--texto-medio);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+}
+
+.valorGrande {
+  font-size: 2.25rem;
+  color: var(--texto-oscuro);
   font-weight: 700;
 }
 
-/* ========== BOTÓN CERRAR ========== */
+/* ========== BOTÓN EXPORTAR ========== */
 
-.botonCerrar {
-  width: 100%;
-  background: var(--gris-medio);
+.botonExportarReportes {
+  background: var(--morado);
   color: white;
-  padding: 14px;
+  padding: 14px 32px;
   border-radius: var(--radius-md);
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 700;
+  display: block;
+  margin: 0 auto;
 }
 
-.botonCerrar:hover {
-  background: var(--gris-hover);
+.botonExportarReportes:hover {
+  background: var(--morado-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-lg);
 }
 
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
-  .modalDetalle {
-    padding: var(--spacing-lg);
+  .vistaReportes {
+    padding: var(--spacing-md);
+  }
+  
+  .vistaReportes h2 {
+    font-size: 1.5rem;
+  }
+  
+  .gridEstadisticas {
+    grid-template-columns: 1fr;
+  }
+  
+  .filtrosReportes button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
-  .modalDetalle h2 {
-    font-size: 1.5rem;
+  .vistaReportes {
+    padding: var(--spacing-sm);
   }
   
-  .productosVenta h3 {
-    font-size: 1.125rem;
+  .vistaReportes h2 {
+    font-size: 1.25rem;
   }
   
-  .totalVentaDetalle h3 {
-    font-size: 1.5rem;
+  .valorGrande {
+    font-size: 1.875rem;
   }
 }
