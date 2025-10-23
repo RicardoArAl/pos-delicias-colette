@@ -1,13 +1,14 @@
 // src/components/historial/ModalDetalleVenta.js
 import React from 'react';
+import styles from './ModalDetalleVenta.module.css';
 
 const ModalDetalleVenta = ({ ventaSeleccionada, cerrarDetalleVenta }) => {
   return (
-    <div className="modal-overlay" onClick={cerrarDetalleVenta}>
-      <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={cerrarDetalleVenta}>
+      <div className={styles.modalDetalle} onClick={(e) => e.stopPropagation()}>
         <h2>🧾 Detalle Venta #{ventaSeleccionada.numeroOrden}</h2>
         
-        <div className="info-venta">
+        <div className={styles.infoVenta}>
           <p><strong>Fecha:</strong> {ventaSeleccionada.fecha}</p>
           <p><strong>Hora:</strong> {ventaSeleccionada.hora}</p>
           <p><strong>Método de pago:</strong> {ventaSeleccionada.metodoPago}</p>
@@ -19,21 +20,21 @@ const ModalDetalleVenta = ({ ventaSeleccionada, cerrarDetalleVenta }) => {
           )}
         </div>
 
-        <div className="productos-venta">
+        <div className={styles.productosVenta}>
           <h3>Productos:</h3>
           {ventaSeleccionada.productos.map((prod, index) => (
-            <div key={index} className="producto-detalle">
+            <div key={index} className={styles.productoDetalle}>
               <span>{prod.nombre} x{prod.cantidad}</span>
               <span>${(prod.precio * prod.cantidad).toLocaleString()}</span>
             </div>
           ))}
         </div>
 
-        <div className="total-venta-detalle">
+        <div className={styles.totalVentaDetalle}>
           <h3>Total: ${ventaSeleccionada.total.toLocaleString()}</h3>
         </div>
 
-        <button className="boton-cerrar" onClick={cerrarDetalleVenta}>
+        <button className={styles.botonCerrar} onClick={cerrarDetalleVenta}>
           Cerrar
         </button>
       </div>

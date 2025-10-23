@@ -1,0 +1,283 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/modales/ModalPrecio.module.css
+   💰 Estilos del modal de precio variable
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ========== OVERLAY DEL MODAL ========== */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+  padding: var(--spacing-lg);
+}
+
+/* ========== MODAL ========== */
+
+.modalPrecio {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-xl);
+  animation: slideUp 0.3s ease;
+}
+
+/* ========== HEADER ========== */
+
+.modalPrecioHeader {
+  background: var(--rojo-primario);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalPrecioHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* ========== CONTENIDO ========== */
+
+.modalPrecioContenido {
+  padding: 24px;
+}
+
+/* ========== INFO DEL PRODUCTO ========== */
+
+.productoInfoPrecio {
+  background: var(--bg-gris-claro);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.productoInfoPrecio h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--rojo-primario);
+}
+
+.descripcionProducto {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: var(--gris-medio);
+  font-style: italic;
+}
+
+.precioMinimo {
+  margin: 8px 0 0 0;
+  font-size: 0.95rem;
+  color: var(--gris-medio);
+}
+
+.precioMinimo strong {
+  color: var(--verde-exito);
+  font-size: 1.1rem;
+}
+
+/* ========== DISPLAY DE PRECIO ========== */
+
+.precioDisplay {
+  background: white;
+  border: 3px solid var(--rojo-primario);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.simboloPeso {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--rojo-primario);
+}
+
+.inputPrecioPersonalizado {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  border: none;
+  background: transparent;
+  text-align: center;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+}
+
+/* ========== SELECTOR DE BILLETES ========== */
+
+.selectorBilletes {
+  margin-bottom: 24px;
+}
+
+.selectorBilletes h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #374151;
+}
+
+.gridBilletes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.gridBilletes button {
+  padding: 14px 10px;
+  background: var(--rojo-primario);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.gridBilletes button:hover {
+  background: var(--rojo-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.gridBilletes button:active {
+  transform: translateY(0);
+}
+
+/* ========== ACCIONES ========== */
+
+.accionesPrecio {
+  display: flex;
+  gap: 12px;
+}
+
+.botonLimpiarPrecio {
+  flex: 1;
+  padding: 14px;
+  background: var(--gris-medio);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.botonLimpiarPrecio:hover {
+  background: var(--gris-hover);
+}
+
+.botonConfirmarPrecio {
+  flex: 2;
+  padding: 14px;
+  background: var(--verde-exito);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.botonConfirmarPrecio:hover:not(:disabled) {
+  background: var(--verde-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.botonConfirmarPrecio:disabled {
+  background: var(--borde-medio);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .modalPrecio {
+    width: 95%;
+    max-width: none;
+  }
+
+  .modalPrecioHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .gridBilletes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .precioDisplay {
+    padding: 16px;
+  }
+
+  .inputPrecioPersonalizado {
+    font-size: 2rem;
+  }
+
+  .simboloPeso {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalPrecioContenido {
+    padding: 16px;
+  }
+
+  .gridBilletes {
+    grid-template-columns: 1fr;
+  }
+
+  .gridBilletes button {
+    padding: 16px;
+    font-size: 1rem;
+  }
+
+  .accionesPrecio {
+    flex-direction: column;
+  }
+
+  .botonConfirmarPrecio,
+  .botonLimpiarPrecio {
+    flex: 1;
+  }
+
+  .precioDisplay {
+    padding: 12px;
+  }
+
+  .inputPrecioPersonalizado {
+    font-size: 1.75rem;
+  }
+
+  .simboloPeso {
+    font-size: 1.25rem;
+  }
+}

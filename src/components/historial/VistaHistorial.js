@@ -1,6 +1,7 @@
 // src/components/historial/VistaHistorial.js
 import React from 'react';
 import { obtenerVentasFiltradas, exportarCSV } from '../../utils/helpers';
+import styles from './VistaHistorial.module.css';
 
 const VistaHistorial = ({
   autenticado,
@@ -18,43 +19,43 @@ const VistaHistorial = ({
   };
 
   return (
-    <div className="vista-historial">
-      <div className="header-historial">
+    <div className={styles.vistaHistorial}>
+      <div className={styles.headerHistorial}>
         <h2>📊 Historial de Ventas</h2>
         {!autenticado && (
-          <p className="aviso-limitado">⚠️ Mostrando solo últimas 24 horas. Ingresa PIN para ver todo.</p>
+          <p className={styles.avisoLimitado}>⚠️ Mostrando solo últimas 24 horas. Ingresa PIN para ver todo.</p>
         )}
       </div>
 
-      <div className="filtros-historial">
-        <div className="filtros-tiempo">
+      <div className={styles.filtrosHistorial}>
+        <div className={styles.filtrosTiempo}>
           <button
-            className={filtroHistorial === 'hoy' ? 'activo' : ''}
+            className={filtroHistorial === 'hoy' ? styles.activo : ''}
             onClick={() => setFiltroHistorial('hoy')}
           >
             Hoy
           </button>
           <button
-            className={filtroHistorial === 'semana' ? 'activo' : ''}
+            className={filtroHistorial === 'semana' ? styles.activo : ''}
             onClick={() => setFiltroHistorial('semana')}
           >
             Esta Semana
           </button>
           <button
-            className={filtroHistorial === 'mes' ? 'activo' : ''}
+            className={filtroHistorial === 'mes' ? styles.activo : ''}
             onClick={() => setFiltroHistorial('mes')}
           >
             Este Mes
           </button>
           <button
-            className={filtroHistorial === 'todas' ? 'activo' : ''}
+            className={filtroHistorial === 'todas' ? styles.activo : ''}
             onClick={() => setFiltroHistorial('todas')}
           >
             Todas
           </button>
         </div>
 
-        <div className="busqueda-orden">
+        <div className={styles.busquedaOrden}>
           <input
             type="text"
             placeholder="🔍 Buscar por número de orden..."
@@ -63,30 +64,30 @@ const VistaHistorial = ({
           />
         </div>
 
-        <button className="boton-exportar" onClick={handleExportar}>
+        <button className={styles.botonExportar} onClick={handleExportar}>
           📥 Exportar CSV
         </button>
       </div>
 
-      <div className="lista-ventas">
+      <div className={styles.listaVentas}>
         {ventasFiltradas.length === 0 ? (
-          <div className="sin-ventas">
+          <div className={styles.sinVentas}>
             <p>No hay ventas para mostrar</p>
           </div>
         ) : (
           ventasFiltradas.map(venta => (
             <div 
               key={venta.id || `venta-${venta.numeroOrden}`} 
-              className="tarjeta-venta"
+              className={styles.tarjetaVenta}
               onClick={() => abrirDetalleVenta(venta)}
             >
-              <div className="venta-header">
+              <div className={styles.ventaHeader}>
                 <h3>Orden #{venta.numeroOrden}</h3>
-                <span className="venta-metodo">{venta.metodoPago}</span>
+                <span className={styles.ventaMetodo}>{venta.metodoPago}</span>
               </div>
               <p>📅 {venta.fecha} - {venta.hora}</p>
               <p>🛒 {venta.productos.length} productos</p>
-              <p className="venta-total">${venta.total.toLocaleString()}</p>
+              <p className={styles.ventaTotal}>${venta.total.toLocaleString()}</p>
             </div>
           ))
         )}

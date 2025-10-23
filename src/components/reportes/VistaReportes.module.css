@@ -1,0 +1,149 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/historial/ModalDetalleVenta.module.css
+   📄 Estilos del modal de detalle de venta
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ========== OVERLAY DEL MODAL ========== */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+  padding: var(--spacing-lg);
+}
+
+/* ========== MODAL ========== */
+
+.modalDetalle {
+  background: var(--bg-blanco);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-xl);
+  animation: slideUp 0.3s ease;
+}
+
+.modalDetalle h2 {
+  font-size: 1.75rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-lg);
+  font-weight: 700;
+}
+
+/* ========== INFO DE LA VENTA ========== */
+
+.infoVenta {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.infoVenta p {
+  margin-bottom: var(--spacing-sm);
+  font-size: 1rem;
+  color: var(--texto-medio);
+}
+
+.infoVenta p strong {
+  color: var(--texto-oscuro);
+  font-weight: 600;
+}
+
+/* ========== PRODUCTOS ========== */
+
+.productosVenta {
+  margin-bottom: var(--spacing-lg);
+}
+
+.productosVenta h3 {
+  font-size: 1.25rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-md);
+  font-weight: 700;
+}
+
+.productoDetalle {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xs);
+  font-size: 1rem;
+}
+
+.productoDetalle span:first-child {
+  color: var(--texto-oscuro);
+  font-weight: 600;
+}
+
+.productoDetalle span:last-child {
+  color: var(--rojo-primario);
+  font-weight: 700;
+}
+
+/* ========== TOTAL ========== */
+
+.totalVentaDetalle {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.totalVentaDetalle h3 {
+  font-size: 1.875rem;
+  color: var(--rojo-primario);
+  font-weight: 700;
+}
+
+/* ========== BOTÓN CERRAR ========== */
+
+.botonCerrar {
+  width: 100%;
+  background: var(--gris-medio);
+  color: white;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.botonCerrar:hover {
+  background: var(--gris-hover);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .modalDetalle {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .modalDetalle h2 {
+    font-size: 1.5rem;
+  }
+  
+  .productosVenta h3 {
+    font-size: 1.125rem;
+  }
+  
+  .totalVentaDetalle h3 {
+    font-size: 1.5rem;
+  }
+}

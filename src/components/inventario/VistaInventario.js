@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { obtenerEstadoStock } from '../../utils/helpers';
 import { forzarActualizacionInventario } from '../../firebaseInventario';
+import styles from './VistaInventario.module.css';
 
 const VistaInventario = ({
   filtroCategoria,
   setFiltroCategoria,
   inventario,
   abrirModalInventario,
-  cargarInventario // Necesitamos esta función de App.js para recargar después de sincronizar
+  cargarInventario
 }) => {
   const [sincronizando, setSincronizando] = useState(false);
 
@@ -33,7 +34,7 @@ const VistaInventario = ({
       const exito = await forzarActualizacionInventario();
       
       if (exito) {
-        await cargarInventario(); // Recargar inventario desde Firebase
+        await cargarInventario();
         alert('✅ Inventario sincronizado exitosamente');
       } else {
         alert('❌ Error al sincronizar inventario');
@@ -47,12 +48,12 @@ const VistaInventario = ({
   };
 
   return (
-    <div className="vista-inventario">
-      <div className="inventario-header">
-        <div className="inventario-header-top">
+    <div className={styles.vistaInventario}>
+      <div className={styles.inventarioHeader}>
+        <div className={styles.inventarioHeaderTop}>
           <h2>📦 Gestión de Inventario</h2>
           <button 
-            className="btn-sincronizar"
+            className={styles.btnSincronizar}
             onClick={sincronizarInventario}
             disabled={sincronizando}
             title="Sincronizar con productos del código"
@@ -61,33 +62,33 @@ const VistaInventario = ({
           </button>
         </div>
         
-        <div className="filtros-inventario">
+        <div className={styles.filtrosInventario}>
           <button
-            className={filtroCategoria === 'todos' ? 'activo' : ''}
+            className={filtroCategoria === 'todos' ? styles.activo : ''}
             onClick={() => setFiltroCategoria('todos')}
           >
             Todos
           </button>
           <button
-            className={filtroCategoria === 'bebidas' ? 'activo' : ''}
+            className={filtroCategoria === 'bebidas' ? styles.activo : ''}
             onClick={() => setFiltroCategoria('bebidas')}
           >
             🥤 Bebidas
           </button>
           <button
-            className={filtroCategoria === 'proteinas' ? 'activo' : ''}
+            className={filtroCategoria === 'proteinas' ? styles.activo : ''}
             onClick={() => setFiltroCategoria('proteinas')}
           >
             🍖 Proteínas
           </button>
           <button
-            className={filtroCategoria === 'embutidos' ? 'activo' : ''}
+            className={filtroCategoria === 'embutidos' ? styles.activo : ''}
             onClick={() => setFiltroCategoria('embutidos')}
           >
             🌭 Embutidos
           </button>
           <button
-            className={filtroCategoria === 'otros' ? 'activo' : ''}
+            className={filtroCategoria === 'otros' ? styles.activo : ''}
             onClick={() => setFiltroCategoria('otros')}
           >
             🧺 Otros
@@ -95,35 +96,35 @@ const VistaInventario = ({
         </div>
       </div>
 
-      <div className="grid-inventario">
+      <div className={styles.gridInventario}>
         {obtenerIngredientesFiltrados().map(item => {
           const estado = obtenerEstadoStock(item);
           return (
             <div
               key={item.id}
-              className={`tarjeta-inventario ${estado}`}
+              className={`${styles.tarjetaInventario} ${styles[estado]}`}
               onClick={() => abrirModalInventario(item)}
             >
-              <div className="inventario-info">
+              <div className={styles.inventarioInfo}>
                 <h3>{item.nombre}</h3>
-                <p className="categoria">{
+                <p className={styles.categoria}>{
                   item.categoria === 'bebidas' ? '🥤 Bebidas':
                   item.categoria === 'proteinas' ? '🍖 Proteínas' :
                   item.categoria === 'embutidos' ? '🌭 Embutidos' :
                   '🧺 Otros'
                 }</p>
               </div>
-              <div className="inventario-stock">
-                <span className="stock-actual">{item.stock}</span>
-                <span className="stock-unidad">{item.unidad}</span>
+              <div className={styles.inventarioStock}>
+                <span className={styles.stockActual}>{item.stock}</span>
+                <span className={styles.stockUnidad}>{item.unidad}</span>
               </div>
               {estado === 'agotado' && (
-                <div className="badge-agotado">AGOTADO</div>
+                <div className={styles.badgeAgotado}>AGOTADO</div>
               )}
               {estado === 'bajo' && (
-                <div className="badge-bajo">STOCK BAJO</div>
+                <div className={styles.badgeBajo}>STOCK BAJO</div>
               )}
-              <div className="stock-minimo">
+              <div className={styles.stockMinimo}>
                 Mínimo: {item.stockMinimo} {item.unidad}
               </div>
             </div>

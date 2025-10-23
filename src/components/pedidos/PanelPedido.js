@@ -1,6 +1,7 @@
 // src/components/pedidos/PanelPedido.js
 import React, { useState } from 'react';
 import { clientesFrecuentes } from '../../data/clientesFrecuentes';
+import styles from './PanelPedido.module.css';
 
 const PanelPedido = ({ 
   pedido, 
@@ -25,28 +26,28 @@ const PanelPedido = ({
   };
 
   return (
-    <div className="panel-pedido">
+    <div className={styles.panelPedido}>
       <h2>🛒 Pedido Actual</h2>
       
       {pedido.length === 0 ? (
-        <div className="pedido-vacio">
+        <div className={styles.pedidoVacio}>
           <p>🍽️ No hay productos en el pedido</p>
         </div>
       ) : (
         <>
-          <div className="lista-pedido">
+          <div className={styles.listaPedido}>
             {pedido.map(item => (
-              <div key={item.id} className="item-pedido">
-                <div className="item-info">
+              <div key={item.id} className={styles.itemPedido}>
+                <div className={styles.itemInfo}>
                   <h4>{item.nombre}</h4>
-                  <p className="item-precio">${(item.precio * item.cantidad).toLocaleString()}</p>
+                  <p className={styles.itemPrecio}>${(item.precio * item.cantidad).toLocaleString()}</p>
                 </div>
-                <div className="item-controles">
+                <div className={styles.itemControles}>
                   <button onClick={() => quitarDelPedido(item.id)}>-</button>
                   <span>{item.cantidad}</span>
                   <button onClick={() => agregarAlPedido(item)}>+</button>
                   <button 
-                    className="boton-eliminar"
+                    className={styles.botonEliminar}
                     onClick={() => eliminarDelPedido(item.id)}
                   >
                     🗑️
@@ -56,21 +57,21 @@ const PanelPedido = ({
             ))}
           </div>
 
-          <div className="total-pedido">
+          <div className={styles.totalPedido}>
             <h3>Total: ${calcularTotal().toLocaleString()}</h3>
           </div>
 
-          <div className="acciones-pedido">
-            <div className="contenedor-pendiente">
+          <div className={styles.accionesPedido}>
+            <div className={styles.contenedorPendiente}>
               <button 
-                className="boton-pendiente"
+                className={styles.botonPendiente}
                 onClick={toggleSelectorCliente}
               >
                 ⏳ Guardar como Pendiente
               </button>
 
               {mostrarSelectorCliente && (
-                <div className="selector-cliente-dropdown">
+                <div className={styles.selectorClienteDropdown}>
                   <label>Cliente (opcional):</label>
                   <select 
                     value={clienteSeleccionado}
@@ -82,15 +83,15 @@ const PanelPedido = ({
                       </option>
                     ))}
                   </select>
-                  <div className="botones-selector">
+                  <div className={styles.botonesSelector}>
                     <button 
-                      className="btn-confirmar-cliente"
+                      className={styles.btnConfirmarCliente}
                       onClick={manejarGuardarPendiente}
                     >
                       ✓ Guardar
                     </button>
                     <button 
-                      className="btn-cancelar-cliente"
+                      className={styles.btnCancelarCliente}
                       onClick={() => {
                         setMostrarSelectorCliente(false);
                         setClienteSeleccionado('sin-cliente');
@@ -104,7 +105,7 @@ const PanelPedido = ({
             </div>
 
             <button 
-              className="boton-pagar"
+              className={styles.botonPagar}
               onClick={abrirPago}
             >
               💰 Pagar

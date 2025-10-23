@@ -1,0 +1,345 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/pendientes/ModalDetalleOrden.module.css
+   📝 Estilos del modal de detalle de orden pendiente
+   ⚠️ ARCHIVO CRÍTICO PARA ANIMACIONES
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ========== OVERLAY DEL MODAL ========== */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+  padding: var(--spacing-lg);
+}
+
+/* ========== MODAL ========== */
+
+.modalDetalle {
+  background: var(--bg-blanco);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-xl);
+  animation: slideUp 0.3s ease;
+}
+
+.modalDetalle h2 {
+  font-size: 1.75rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-lg);
+  font-weight: 700;
+}
+
+/* ========== INFO DE LA ORDEN ========== */
+
+.infoOrden {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.infoOrden p {
+  margin-bottom: var(--spacing-sm);
+  font-size: 1rem;
+  color: var(--texto-medio);
+}
+
+.infoOrden p strong {
+  color: var(--texto-oscuro);
+  font-weight: 600;
+}
+
+/* ========== PRODUCTOS ========== */
+
+.productosOrden {
+  margin-bottom: var(--spacing-lg);
+}
+
+.productosOrden h3 {
+  font-size: 1.25rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-md);
+  font-weight: 700;
+}
+
+.productoDetalle {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xs);
+  font-size: 1rem;
+}
+
+.productoDetalle span:first-child {
+  color: var(--texto-oscuro);
+  font-weight: 600;
+}
+
+.productoDetalle span:last-child {
+  color: var(--rojo-primario);
+  font-weight: 700;
+}
+
+/* ========== TOTAL ========== */
+
+.totalOrdenDetalle {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.totalOrdenDetalle h3 {
+  font-size: 1.875rem;
+  color: var(--rojo-primario);
+  font-weight: 700;
+}
+
+/* ========== ACCIONES ========== */
+
+.accionesDetalle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.accionesDetalle button {
+  flex: 1;
+  min-width: 150px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: var(--bg-gris-claro);
+  color: var(--texto-oscuro);
+}
+
+.accionesDetalle button:hover {
+  background: var(--bg-gris);
+  transform: translateY(-2px);
+}
+
+.accionesDetalle .botonPagar {
+  background: var(--verde-exito);
+  color: white;
+}
+
+.accionesDetalle .botonPagar:hover {
+  background: var(--verde-hover);
+}
+
+.botonCancelarOrden {
+  background: var(--rojo-primario) !important;
+  color: white !important;
+}
+
+.botonCancelarOrden:hover {
+  background: var(--rojo-hover) !important;
+}
+
+.botonCerrar {
+  width: 100%;
+  background: var(--gris-medio);
+  color: white;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.botonCerrar:hover {
+  background: var(--gris-hover);
+}
+
+/* ========== MODO AGREGAR PRODUCTOS ========== */
+
+.agregarProductosModo {
+  margin-top: var(--spacing-lg);
+}
+
+.agregarProductosModo h3 {
+  font-size: 1.25rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-md);
+  font-weight: 700;
+}
+
+/* Categorías mini */
+.categoriasMini {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.categoriasMini button {
+  background: var(--bg-gris-claro);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 1.25rem;
+}
+
+.categoriasMini button:hover {
+  background: var(--bg-gris);
+}
+
+.categoriasMini button.activo {
+  background: var(--rojo-primario);
+  color: white;
+}
+
+/* Grid de productos mini */
+.gridProductosMini {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.productoMini {
+  background: var(--bg-gris-claro);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.productoMini:hover {
+  background: var(--rojo-primario);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.productoMini.productoAgotado {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.productoMini span:first-child {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.productoMini span:last-child {
+  font-weight: 700;
+}
+
+/* Lista de productos nuevos */
+.productosNuevosLista {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.productosNuevosLista h4 {
+  font-size: 1rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.productoNuevoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--bg-blanco);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.productoNuevoItem span {
+  font-weight: 600;
+  color: var(--texto-oscuro);
+}
+
+.productoNuevoItem div {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.productoNuevoItem button {
+  width: 32px;
+  height: 32px;
+  background: var(--rojo-primario);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+.productoNuevoItem button:hover {
+  background: var(--rojo-hover);
+}
+
+/* Acciones agregar */
+.accionesAgregar {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.accionesAgregar button {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .modalDetalle {
+    padding: var(--spacing-lg);
+  }
+  
+  .accionesDetalle {
+    flex-direction: column;
+  }
+  
+  .accionesDetalle button {
+    width: 100%;
+  }
+  
+  .gridProductosMini {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalDetalle h2 {
+    font-size: 1.5rem;
+  }
+  
+  .productosOrden h3,
+  .agregarProductosModo h3 {
+    font-size: 1.125rem;
+  }
+  
+  .totalOrdenDetalle h3 {
+    font-size: 1.5rem;
+  }
+}

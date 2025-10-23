@@ -1,6 +1,8 @@
 // src/components/pendientes/VistaPendientes.js
 import React from 'react';
 import { calcularTiempoTranscurrido, obtenerColorTiempo } from '../../utils/helpers';
+import { obtenerCliente } from '../../data/clientesFrecuentes';
+import styles from './VistaPendientes.module.css';
 
 const VistaPendientes = ({ 
   ordenesPendientes, 
@@ -8,49 +10,62 @@ const VistaPendientes = ({
   procesarPagoPendiente 
 }) => {
   return (
-    <div className="vista-pendientes">
-      <div className="header-pendientes">
+    <div className={styles.vistaPendientes}>
+      <div className={styles.headerPendientes}>
         <h2>⏳ Órdenes Pendientes ({ordenesPendientes.length})</h2>
       </div>
 
       {ordenesPendientes.length === 0 ? (
-        <div className="sin-pendientes">
+        <div className={styles.sinPendientes}>
           <p>✅ No hay órdenes pendientes</p>
         </div>
       ) : (
-        <div className="grid-pendientes">
+        <div className={styles.gridPendientes}>
           {ordenesPendientes.map(orden => {
             const minutos = calcularTiempoTranscurrido(orden.fechaCreacion);
             const colorTiempo = obtenerColorTiempo(minutos);
+            const cliente = obtenerCliente(orden.clienteId || 'sin-cliente');
             
             return (
               <div 
                 key={orden.firebaseId} 
-                className="tarjeta-orden-pendiente"
+                className={styles.tarjetaOrdenPendiente}
                 style={{ borderLeft: `4px solid ${colorTiempo}` }}
               >
-                <div className="orden-header">
+                <div className={styles.ordenHeader}>
                   <h3>Orden #{orden.numeroOrden}</h3>
                   <span 
-                    className="tiempo-transcurrido"
+                    className={styles.tiempoTranscurrido}
                     style={{ background: colorTiempo }}
                   >
                     {minutos} min
                   </span>
                 </div>
                 
-                <div className="orden-info">
+                {/* CLIENTE VISIBLE */}
+                <div className={styles.clienteInfo}>
+                  <div className={styles.avatarCliente} style={{ background: cliente.color }}>
+                    {cliente.iniciales || '👤'}
+                  </div>
+                  <div>
+                    <p className={styles.nombreCliente}>
+                      {cliente.nombre}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className={styles.ordenInfo}>
                   <p>📅 {orden.fecha} - {orden.hora}</p>
                   <p>🛒 {orden.cantidadProductos} productos</p>
-                  <p className="orden-total">💰 ${orden.total.toLocaleString()}</p>
+                  <p className={styles.ordenTotal}>💰 ${orden.total.toLocaleString()}</p>
                 </div>
 
-                <div className="orden-acciones">
+                <div className={styles.ordenAcciones}>
                   <button onClick={() => abrirDetalleOrden(orden)}>
                     👁️ Ver Detalles
                   </button>
                   <button 
-                    className="boton-pagar-pendiente"
+                    className={styles.botonPagarPendiente}
                     onClick={() => procesarPagoPendiente(orden)}
                   >
                     💳 Pagar

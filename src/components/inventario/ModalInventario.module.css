@@ -1,0 +1,314 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/inventario/VistaInventario.module.css
+   📦 Estilos de la vista principal de inventario
+   ════════════════════════════════════════════════════════════════════ */
+
+.vistaInventario {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ========== HEADER ========== */
+
+.inventarioHeader {
+  margin-bottom: 30px;
+}
+
+.inventarioHeaderTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.inventarioHeaderTop h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+/* ========== BOTÓN SINCRONIZAR ========== */
+
+.btnSincronizar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.btnSincronizar:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btnSincronizar:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btnSincronizar:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ========== FILTROS ========== */
+
+.filtrosInventario {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filtrosInventario button {
+  padding: 10px 20px;
+  border: 2px solid var(--borde-claro);
+  background: white;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--gris-medio);
+}
+
+.filtrosInventario button:hover {
+  border-color: var(--borde-medio);
+  background: var(--bg-gris-claro);
+  transform: translateY(-1px);
+}
+
+.filtrosInventario button.activo {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ========== GRID DE INVENTARIO ========== */
+
+.gridInventario {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* ========== TARJETA DE INVENTARIO ========== */
+
+.tarjetaInventario {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--sombra-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 3px solid transparent;
+  animation: fadeInUp 0.3s ease;
+}
+
+.tarjetaInventario:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-lg);
+}
+
+/* Estados de stock */
+.tarjetaInventario.normal {
+  border-color: var(--verde-exito);
+}
+
+.tarjetaInventario.normal:hover {
+  border-color: var(--verde-hover);
+}
+
+.tarjetaInventario.bajo {
+  border-color: var(--naranja-advertencia);
+  background: #fffbeb;
+}
+
+.tarjetaInventario.bajo:hover {
+  border-color: var(--naranja-hover);
+}
+
+.tarjetaInventario.agotado {
+  border-color: #ef4444;
+  background: #fee2e2;
+}
+
+.tarjetaInventario.agotado:hover {
+  border-color: #dc2626;
+}
+
+/* ========== INFO DEL INVENTARIO ========== */
+
+.inventarioInfo h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.inventarioInfo .categoria {
+  margin: 0 0 12px 0;
+  font-size: 0.875rem;
+  color: var(--gris-medio);
+  font-weight: 500;
+}
+
+.inventarioStock {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.stockActual {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--rojo-primario);
+}
+
+.tarjetaInventario.agotado .stockActual {
+  color: #ef4444;
+}
+
+.tarjetaInventario.bajo .stockActual {
+  color: var(--naranja-advertencia);
+}
+
+.stockUnidad {
+  font-size: 1rem;
+  color: var(--gris-medio);
+  font-weight: 500;
+}
+
+.stockMinimo {
+  font-size: 0.875rem;
+  color: var(--gris-medio);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--borde-claro);
+}
+
+/* ========== BADGES DE ESTADO ========== */
+
+.badgeAgotado,
+.badgeBajo {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badgeAgotado {
+  background: #ef4444;
+  color: white;
+}
+
+.badgeBajo {
+  background: var(--naranja-advertencia);
+  color: white;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .vistaInventario {
+    padding: 16px;
+  }
+
+  .inventarioHeaderTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .inventarioHeaderTop h2 {
+    font-size: 1.5rem;
+  }
+
+  .btnSincronizar {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.95rem;
+    padding: 14px 20px;
+  }
+
+  .filtrosInventario {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .filtrosInventario button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .gridInventario {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .tarjetaInventario {
+    padding: 16px;
+  }
+
+  .stockActual {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventarioHeaderTop h2 {
+    font-size: 1.25rem;
+  }
+
+  .filtrosInventario button {
+    font-size: 0.875rem;
+    padding: 8px 16px;
+    flex: 1 1 auto;
+    min-width: 100px;
+  }
+
+  .gridInventario {
+    grid-template-columns: 1fr;
+  }
+
+  .tarjetaInventario {
+    padding: 14px;
+  }
+
+  .inventarioInfo h3 {
+    font-size: 1.125rem;
+  }
+
+  .stockActual {
+    font-size: 1.75rem;
+  }
+
+  .badgeAgotado,
+  .badgeBajo {
+    font-size: 0.65rem;
+    padding: 4px 8px;
+  }
+}

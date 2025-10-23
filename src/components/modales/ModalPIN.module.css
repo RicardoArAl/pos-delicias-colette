@@ -1,0 +1,189 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/modales/ModalPIN.module.css
+   🔐 Estilos del modal de autenticación PIN
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ========== OVERLAY DEL MODAL ========== */
+
+.modalPinOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ========== MODAL ========== */
+
+.modalPinContent {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+/* ========== HEADER ========== */
+
+.modalPinHeader {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.modalPinHeader h2 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.modalPinHeader p {
+  margin: 0;
+  color: var(--gris-medio);
+  font-size: 0.95rem;
+}
+
+/* ========== DISPLAY DE PIN ========== */
+
+.pinDisplay {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+.pinCircle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid var(--borde-medio);
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.pinCircle.filled {
+  background: var(--rojo-primario);
+  border-color: var(--rojo-primario);
+  transform: scale(1.1);
+}
+
+/* ========== TECLADO ========== */
+
+.pinTeclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.pinBoton {
+  background: var(--bg-gris-claro);
+  border: none;
+  border-radius: 12px;
+  height: 70px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pinBoton:hover {
+  background: var(--bg-gris);
+  transform: translateY(-2px);
+}
+
+.pinBoton:active {
+  transform: scale(0.95);
+  background: var(--borde-medio);
+}
+
+.pinBoton.especial {
+  background: var(--rojo-primario);
+  color: white;
+  font-size: 1.3rem;
+}
+
+.pinBoton.especial:hover {
+  background: var(--rojo-hover);
+}
+
+.pinBoton.borrar {
+  background: var(--gris-medio);
+  color: white;
+}
+
+.pinBoton.borrar:hover {
+  background: var(--gris-hover);
+}
+
+.pinBoton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========== ERROR ========== */
+
+.pinError {
+  background: #fee2e2;
+  color: var(--rojo-primario);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 15px;
+  font-weight: 500;
+  animation: shake 0.4s ease;
+}
+
+/* ========== BOTÓN CANCELAR ========== */
+
+.pinBotonCancelar {
+  width: 100%;
+  background: var(--gris-medio);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: all 0.2s ease;
+}
+
+.pinBotonCancelar:hover {
+  background: var(--gris-hover);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 480px) {
+  .modalPinContent {
+    padding: 25px 20px;
+  }
+
+  .pinCircle {
+    width: 45px;
+    height: 45px;
+  }
+
+  .pinBoton {
+    height: 65px;
+    font-size: 1.3rem;
+  }
+}

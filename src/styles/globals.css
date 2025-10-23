@@ -1,0 +1,115 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/styles/globals.css
+   🌐 Estilos globales y base del sistema
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ========== RESET CSS ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ========== ESTILOS BASE ========== */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-principal);
+  color: var(--texto-oscuro);
+}
+
+/* ========== CONTENEDOR PRINCIPAL ========== */
+.App {
+  min-height: 100vh;
+  background: var(--bg-principal);
+}
+
+/* ========== SCROLLBAR PERSONALIZADO ========== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-gris-claro);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gris-medio);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gris-hover);
+}
+
+/* ========== BOTONES BASE ========== */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-normal);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ========== INPUTS BASE ========== */
+input {
+  font-family: inherit;
+  border: 2px solid var(--borde-medio);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 1rem;
+  transition: border-color var(--transition-normal);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--rojo-primario);
+}
+
+/* ========== UTILIDADES ========== */
+.texto-centrado {
+  text-align: center;
+}
+
+.oculto {
+  display: none !important;
+}
+
+/* ========== PRINT STYLES ========== */
+@media print {
+  .header-buttons,
+  .categorias,
+  .boton-agregar,
+  .acciones-pedido,
+  .acciones-modal,
+  .acciones-detalle {
+    display: none !important;
+  }
+  
+  .modal-overlay {
+    background: white !important;
+  }
+  
+  .contenedor-principal {
+    display: block;
+  }
+  
+  * {
+    box-shadow: none !important;
+  }
+}

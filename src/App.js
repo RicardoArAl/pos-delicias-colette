@@ -1,5 +1,7 @@
+import './styles/variables.css';
+import './styles/globals.css';
+import './styles/animations.css';
 import React, { useState, useEffect } from 'react';
-import './App.css';
 
 // ========== IMPORTAR DATOS ==========
 import { productos, categorias } from './data/productos';

@@ -1,5 +1,6 @@
 // src/components/modales/ModalPIN.js
 import React from 'react';
+import styles from './ModalPIN.module.css';
 
 const ModalPIN = ({
   pinIngresado,
@@ -12,27 +13,27 @@ const ModalPIN = ({
   const numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   
   return (
-    <div className="modal-pin-overlay" onClick={cerrarModalPIN}>
-      <div className="modal-pin-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-pin-header">
+    <div className={styles.modalPinOverlay} onClick={cerrarModalPIN}>
+      <div className={styles.modalPinContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalPinHeader}>
           <h2>🔐 Acceso Restringido</h2>
           <p>Ingresa el PIN de 4 dígitos</p>
         </div>
 
-        <div className="pin-display">
+        <div className={styles.pinDisplay}>
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`pin-circle ${pinIngresado.length > i ? 'filled' : ''}`}
+              className={`${styles.pinCircle} ${pinIngresado.length > i ? styles.filled : ''}`}
             />
           ))}
         </div>
 
-        <div className="pin-teclado">
+        <div className={styles.pinTeclado}>
           {numeros.map((num) => (
             <button
               key={num}
-              className="pin-boton"
+              className={styles.pinBoton}
               onClick={() => agregarDigitoPIN(num.toString())}
             >
               {num}
@@ -40,7 +41,7 @@ const ModalPIN = ({
           ))}
           
           <button
-            className="pin-boton borrar"
+            className={`${styles.pinBoton} ${styles.borrar}`}
             onClick={borrarDigitoPIN}
             disabled={pinIngresado.length === 0}
           >
@@ -48,14 +49,14 @@ const ModalPIN = ({
           </button>
           
           <button
-            className="pin-boton"
+            className={styles.pinBoton}
             onClick={() => agregarDigitoPIN('0')}
           >
             0
           </button>
           
           <button
-            className="pin-boton especial"
+            className={`${styles.pinBoton} ${styles.especial}`}
             onClick={confirmarPIN}
             disabled={pinIngresado.length !== 4}
           >
@@ -64,10 +65,10 @@ const ModalPIN = ({
         </div>
 
         {errorPIN && (
-          <div className="pin-error">{errorPIN}</div>
+          <div className={styles.pinError}>{errorPIN}</div>
         )}
 
-        <button className="pin-boton-cancelar" onClick={cerrarModalPIN}>
+        <button className={styles.pinBotonCancelar} onClick={cerrarModalPIN}>
           Cancelar
         </button>
       </div>

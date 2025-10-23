@@ -1,0 +1,48 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/pedidos/VistaPedidos.module.css
+   🛒 Estilos del contenedor principal de pedidos
+   ════════════════════════════════════════════════════════════════════ */
+
+.contenedorPrincipal {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  height: calc(100vh - 140px);
+  overflow: hidden;
+}
+
+/* ========== RESPONSIVE ========== */
+
+/* Desktop grande */
+@media (min-width: 1024px) {
+  .contenedorPrincipal {
+    grid-template-columns: 1fr 450px;
+  }
+}
+
+/* Tablet grande */
+@media (max-width: 1024px) {
+  .contenedorPrincipal {
+    grid-template-columns: 1fr 380px;
+    height: calc(100vh - 160px);
+  }
+}
+
+/* Tablet pequeño */
+@media (max-width: 768px) {
+  .contenedorPrincipal {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Landscape en móvil */
+@media (max-width: 768px) and (orientation: landscape) {
+  .contenedorPrincipal {
+    grid-template-columns: 1fr 350px;
+    height: calc(100vh - 120px);
+  }
+}

@@ -1,0 +1,59 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/styles/variables.css
+   🎨 Variables CSS globales del sistema
+   ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ========== COLORES PRINCIPALES ========== */
+  --rojo-primario: #dc2626;
+  --rojo-hover: #b91c1c;
+  --verde-exito: #16a34a;
+  --verde-hover: #15803d;
+  --naranja-advertencia: #f59e0b;
+  --naranja-hover: #d97706;
+  --azul-info: #3b82f6;
+  --azul-hover: #2563eb;
+  --morado: #8b5cf6;
+  --morado-hover: #7c3aed;
+  --gris-medio: #6b7280;
+  --gris-hover: #4b5563;
+  
+  /* ========== COLORES DE FONDO ========== */
+  --bg-principal: #f9fafb;
+  --bg-blanco: #ffffff;
+  --bg-gris-claro: #f3f4f6;
+  --bg-gris: #e5e7eb;
+  
+  /* ========== COLORES DE TEXTO ========== */
+  --texto-oscuro: #1f2937;
+  --texto-medio: #4b5563;
+  --texto-claro: #6b7280;
+  
+  /* ========== BORDES ========== */
+  --borde-claro: #e5e7eb;
+  --borde-medio: #d1d5db;
+  
+  /* ========== SOMBRAS ========== */
+  --sombra-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --sombra-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --sombra-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --sombra-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* ========== ESPACIADO ========== */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* ========== BORDER RADIUS ========== */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* ========== TRANSICIONES ========== */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}

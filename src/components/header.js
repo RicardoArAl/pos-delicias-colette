@@ -1,5 +1,6 @@
 // src/components/Header.js
 import React from 'react';
+import styles from './Header.module.css';
 
 const Header = ({ 
   vistaActual, 
@@ -10,25 +11,25 @@ const Header = ({
   cerrarSesion 
 }) => {
   return (
-    <header className="header">
+    <header className={styles.header}>
       <h1>🍔 Delicias de Colette - POS</h1>
-      <div className="header-buttons">
+      <div className={styles.headerButtons}>
         <button
-          className={vistaActual === 'pedidos' ? 'activo' : ''}
+          className={vistaActual === 'pedidos' ? styles.activo : ''}
           onClick={() => setVistaActual('pedidos')}
         >
           🛒 Pedidos
         </button>
         
         <button
-          className={vistaActual === 'pendientes' ? 'activo' : ''}
+          className={vistaActual === 'pendientes' ? styles.activo : ''}
           onClick={() => setVistaActual('pendientes')}
         >
           ⏳ Pendientes ({ordenesPendientes.length})
         </button>
         
         <button
-          className={`${vistaActual === 'historial' ? 'activo' : ''} ${!autenticado ? 'boton-con-candado' : ''}`}
+          className={`${vistaActual === 'historial' ? styles.activo : ''} ${!autenticado ? styles.botonConCandado : ''}`}
           onClick={() => manejarClickVistaProtegida('historial')}
           style={{ background: '#3b82f6' }}
         >
@@ -36,7 +37,7 @@ const Header = ({
         </button>
         
         <button
-          className={`${vistaActual === 'reportes' ? 'activo' : ''} ${!autenticado ? 'boton-con-candado' : ''}`}
+          className={`${vistaActual === 'reportes' ? styles.activo : ''} ${!autenticado ? styles.botonConCandado : ''}`}
           onClick={() => manejarClickVistaProtegida('reportes')}
           style={{ background: '#8b5cf6' }}
         >
@@ -44,7 +45,7 @@ const Header = ({
         </button>
 
         <button
-          className={`boton-nav ${vistaActual === 'inventario' ? 'activo' : ''}`}
+          className={`${styles.botonNav} ${vistaActual === 'inventario' ? styles.activo : ''}`}
           onClick={() => manejarClickVistaProtegida('inventario')}
         >
           📦 Inventario
@@ -52,7 +53,7 @@ const Header = ({
 
         {autenticado && (
           <button
-            className="boton-cerrar-sesion"
+            className={styles.botonCerrarSesion}
             onClick={cerrarSesion}
           >
             Cerrar Sesión

@@ -1,0 +1,308 @@
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: src/components/pedidos/PanelPedido.module.css
+   🛒 Estilos del carrito de compras (derecha)
+   ════════════════════════════════════════════════════════════════════ */
+
+.panelPedido {
+  background: var(--bg-blanco);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--sombra-lg);
+  overflow: hidden;
+}
+
+.panelPedido h2 {
+  font-size: 1.5rem;
+  color: var(--texto-oscuro);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--borde-claro);
+}
+
+/* ========== PEDIDO VACÍO ========== */
+
+.pedidoVacio {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-claro);
+  font-size: 1.125rem;
+}
+
+.pedidoVacio p {
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+/* ========== LISTA DE PEDIDO ========== */
+
+.listaPedido {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: var(--spacing-md);
+  padding-right: var(--spacing-xs);
+}
+
+/* ========== ITEM DE PEDIDO ========== */
+
+.itemPedido {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemInfo h4 {
+  font-size: 1rem;
+  color: var(--texto-oscuro);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.itemPrecio {
+  font-size: 1.125rem;
+  color: var(--rojo-primario);
+  font-weight: 700;
+}
+
+.itemControles {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.itemControles button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: 1.125rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-blanco);
+  color: var(--texto-oscuro);
+  border: 2px solid var(--borde-medio);
+}
+
+.itemControles button:hover {
+  background: var(--rojo-primario);
+  color: white;
+  border-color: var(--rojo-primario);
+}
+
+.itemControles span {
+  min-width: 32px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.botonEliminar {
+  background: var(--rojo-primario) !important;
+  color: white !important;
+  border-color: var(--rojo-primario) !important;
+  margin-left: var(--spacing-xs);
+}
+
+.botonEliminar:hover {
+  background: var(--rojo-hover) !important;
+}
+
+/* ========== TOTAL DEL PEDIDO ========== */
+
+.totalPedido {
+  background: var(--bg-gris-claro);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.totalPedido h3 {
+  font-size: 1.5rem;
+  color: var(--texto-oscuro);
+  text-align: center;
+  font-weight: 700;
+}
+
+/* ========== SELECTOR DE CLIENTE ========== */
+
+.contenedorPendiente {
+  position: relative;
+  flex: 1;
+}
+
+.selectorClienteDropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid var(--borde-claro);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  animation: slideUp 0.2s ease;
+}
+
+.selectorClienteDropdown label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--gris-medio);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.selectorClienteDropdown select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--borde-claro);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.selectorClienteDropdown select:hover {
+  border-color: var(--borde-medio);
+}
+
+.selectorClienteDropdown select:focus {
+  outline: none;
+  border-color: var(--azul-info);
+}
+
+.botonesSelector {
+  display: flex;
+  gap: 8px;
+}
+
+.btnConfirmarCliente,
+.btnCancelarCliente {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnConfirmarCliente {
+  background: var(--verde-exito);
+  color: white;
+}
+
+.btnConfirmarCliente:hover {
+  background: var(--verde-hover);
+}
+
+.btnCancelarCliente {
+  background: var(--rojo-primario);
+  color: white;
+}
+
+.btnCancelarCliente:hover {
+  background: var(--rojo-hover);
+}
+
+/* ========== ACCIONES DEL PEDIDO ========== */
+
+.accionesPedido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.botonPendiente {
+  background: var(--naranja-advertencia);
+  color: white;
+  padding: 14px 24px;
+  border-radius: var(--radius-md);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.botonPendiente:hover {
+  background: var(--naranja-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.botonPagar {
+  background: var(--verde-exito);
+  color: white;
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.botonPagar:hover {
+  background: var(--verde-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-lg);
+}
+
+/* ========== RESPONSIVE ========== */
+
+/* Tablet pequeño */
+@media (max-width: 768px) {
+  .panelPedido {
+    order: 1;
+    position: sticky;
+    top: 140px;
+    z-index: 50;
+  }
+  
+  .selectorClienteDropdown {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+/* Móvil */
+@media (max-width: 480px) {
+  .itemPedido {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .itemControles {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Landscape en móvil */
+@media (max-width: 768px) and (orientation: landscape) {
+  .panelPedido {
+    position: relative;
+    top: 0;
+    order: 2;
+  }
+}

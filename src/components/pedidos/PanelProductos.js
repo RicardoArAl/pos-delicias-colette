@@ -1,5 +1,6 @@
 // src/components/pedidos/PanelProductos.js
 import React from 'react';
+import styles from './PanelProductos.module.css';
 
 const PanelProductos = ({ 
   categorias, 
@@ -11,13 +12,13 @@ const PanelProductos = ({
   inventario 
 }) => {
   return (
-    <div className="panel-productos">
+    <div className={styles.panelProductos}>
       {/* Categorías */}
-      <div className="categorias">
+      <div className={styles.categorias}>
         {categorias.map(cat => (
           <button
             key={cat.id}
-            className={categoriaActual === cat.id ? 'activo' : ''}
+            className={categoriaActual === cat.id ? styles.activo : ''}
             onClick={() => setCategoriaActual(cat.id)}
           >
             {cat.icono} {cat.nombre}
@@ -26,14 +27,14 @@ const PanelProductos = ({
       </div>
 
       {/* Grid de productos */}
-      <div className="grid-productos">
+      <div className={styles.gridProductos}>
         {productos[categoriaActual].map(producto => {
           const disponible = verificarDisponibilidad(producto.id, 1, inventario);
 
           return (
             <div
               key={producto.id}
-              className={`tarjeta-producto ${!disponible ? 'producto-agotado' : ''}`}
+              className={`${styles.tarjetaProducto} ${!disponible ? styles.productoAgotado : ''}`}
               onClick={() => disponible && agregarAlPedido(producto)}
               style={{ 
                 cursor: disponible ? 'pointer' : 'not-allowed',
@@ -41,9 +42,9 @@ const PanelProductos = ({
               }}
             >
               <h3>{producto.nombre}</h3>
-              <p className="precio">${producto.precio.toLocaleString()}</p>
+              <p className={styles.precio}>${producto.precio.toLocaleString()}</p>
               {!disponible && (
-                <div className="overlay-agotado">
+                <div className={styles.overlayAgotado}>
                   <span>❌ AGOTADO</span>
                 </div>
               )}

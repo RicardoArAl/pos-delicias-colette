@@ -1,5 +1,6 @@
 // src/components/modales/ModalPago.js
 import React from 'react';
+import styles from './ModalPago.module.css';
 
 const ModalPago = ({
   calcularTotal,
@@ -13,23 +14,23 @@ const ModalPago = ({
   confirmarPago
 }) => {
   return (
-    <div className="modal-overlay" onClick={cerrarPago}>
-      <div className="modal-pago" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={cerrarPago}>
+      <div className={styles.modalPago} onClick={(e) => e.stopPropagation()}>
         <h2>💰 Procesar Pago</h2>
         
-        <div className="total-modal">
+        <div className={styles.totalModal}>
           <h3>Total a pagar: ${calcularTotal().toLocaleString()}</h3>
         </div>
 
-        <div className="metodos-pago">
+        <div className={styles.metodosPago}>
           <button
-            className={metodoPago === 'efectivo' ? 'activo' : ''}
+            className={metodoPago === 'efectivo' ? styles.activo : ''}
             onClick={() => setMetodoPago('efectivo')}
           >
             💵 Efectivo
           </button>
           <button
-            className={metodoPago === 'transferencia' ? 'activo' : ''}
+            className={metodoPago === 'transferencia' ? styles.activo : ''}
             onClick={() => setMetodoPago('transferencia')}
           >
             💳 Transferencia
@@ -38,9 +39,9 @@ const ModalPago = ({
 
         {metodoPago === 'efectivo' && (
           <>
-            <div className="selector-billetes">
+            <div className={styles.selectorBilletes}>
               <h4>Monto recibido:</h4>
-              <div className="grid-billetes">
+              <div className={styles.gridBilletes}>
                 <button onClick={() => agregarMonto(2000)}>$2.000</button>
                 <button onClick={() => agregarMonto(5000)}>$5.000</button>
                 <button onClick={() => agregarMonto(10000)}>$10.000</button>
@@ -50,7 +51,7 @@ const ModalPago = ({
               </div>
             </div>
 
-            <div className="monto-recibido">
+            <div className={styles.montoRecibido}>
               <h4>Monto ingresado:</h4>
               <input
                 type="text"
@@ -58,7 +59,7 @@ const ModalPago = ({
                 readOnly
               />
               <button 
-                className="boton-limpiar"
+                className={styles.botonLimpiar}
                 onClick={() => setMontoRecibido('')}
               >
                 🗑️ Limpiar
@@ -66,9 +67,9 @@ const ModalPago = ({
             </div>
 
             {montoRecibido && (
-              <div className="cambio-display">
+              <div className={styles.cambioDisplay}>
                 <h4>Cambio:</h4>
-                <p className={calcularCambio() < 0 ? 'cambio-negativo' : 'cambio-positivo'}>
+                <p className={calcularCambio() < 0 ? styles.cambioNegativo : styles.cambioPositivo}>
                   ${calcularCambio().toLocaleString()}
                 </p>
               </div>
@@ -76,12 +77,12 @@ const ModalPago = ({
           </>
         )}
 
-        <div className="acciones-modal">
-          <button className="boton-cancelar" onClick={cerrarPago}>
+        <div className={styles.accionesModal}>
+          <button className={styles.botonCancelar} onClick={cerrarPago}>
             ❌ Cancelar
           </button>
           <button 
-            className="boton-confirmar"
+            className={styles.botonConfirmar}
             onClick={confirmarPago}
             disabled={!metodoPago || (metodoPago === 'efectivo' && calcularCambio() < 0)}
           >
