@@ -309,7 +309,7 @@ input:focus {
   box-shadow: var(--sombra-lg);
 }
 
-/* Continuará en Parte 3/5... */-agregar {
+-agregar {
   background: var(--rojo-primario);
   color: white;
   padding: 10px 18px;
@@ -1424,9 +1424,9 @@ input:focus {
   color: var(--texto-medio);
 }
 
-/* Continuará en Parte 5/5... */
+
 /* ============================================
-   PARTE 5/5: SISTEMA DE PIN, ANIMACIONES Y RESPONSIVE
+   SISTEMA DE PIN, ANIMACIONES Y RESPONSIVE
    ============================================ */
 
 /* ==================== MODAL PIN ==================== */
@@ -1922,4 +1922,795 @@ input:focus {
   }
 }
 
-/* ==================== FIN DEL CSS ==================== */
+/* ========================================
+   ESTILOS PARA MODAL DE PRECIO PERSONALIZADO
+   Agregar al final de App.css
+   ======================================== */
+
+.modal-precio {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-xl);
+  animation: slideUp 0.3s ease;
+}
+
+.modal-precio-header {
+  background: var(--rojo-primario);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-precio-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.modal-precio-contenido {
+  padding: 24px;
+}
+
+.producto-info-precio {
+  background: var(--bg-gris-claro);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.producto-info-precio h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--rojo-primario);
+}
+
+.descripcion-producto {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.precio-minimo {
+  margin: 8px 0 0 0;
+  font-size: 0.95rem;
+  color: var(--gris-medio);
+}
+
+.precio-minimo strong {
+  color: var(--verde-exito);
+  font-size: 1.1rem;
+}
+
+.precio-display {
+  background: white;
+  border: 3px solid var(--rojo-primario);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.simbolo-peso {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--rojo-primario);
+}
+
+.input-precio-personalizado {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  border: none;
+  background: transparent;
+  text-align: center;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+}
+
+.selector-billetes {
+  margin-bottom: 24px;
+}
+
+.selector-billetes h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #374151;
+}
+
+.grid-billetes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.grid-billetes button {
+  padding: 14px 10px;
+  background: var(--rojo-primario);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.grid-billetes button:hover {
+  background: var(--rojo-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.grid-billetes button:active {
+  transform: translateY(0);
+}
+
+.acciones-precio {
+  display: flex;
+  gap: 12px;
+}
+
+.boton-limpiar-precio {
+  flex: 1;
+  padding: 14px;
+  background: var(--gris-medio);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.boton-limpiar-precio:hover {
+  background: var(--gris-hover);
+}
+
+.boton-confirmar-precio {
+  flex: 2;
+  padding: 14px;
+  background: var(--verde-exito);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.boton-confirmar-precio:hover:not(:disabled) {
+  background: var(--verde-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.boton-confirmar-precio:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive para Tablets */
+@media (max-width: 768px) {
+  .modal-precio {
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-precio-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .grid-billetes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .precio-display {
+    padding: 16px;
+  }
+
+  .input-precio-personalizado {
+    font-size: 2rem;
+  }
+
+  .simbolo-peso {
+    font-size: 1.5rem;
+  }
+}
+
+/* Responsive para Móviles */
+@media (max-width: 480px) {
+  .modal-precio-contenido {
+    padding: 16px;
+  }
+
+  .grid-billetes {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-billetes button {
+    padding: 16px;
+    font-size: 1rem;
+  }
+
+  .acciones-precio {
+    flex-direction: column;
+  }
+
+  .boton-confirmar-precio,
+  .boton-limpiar-precio {
+    flex: 1;
+  }
+
+  .precio-display {
+    padding: 12px;
+  }
+
+  .input-precio-personalizado {
+    font-size: 1.75rem;
+  }
+
+  .simbolo-peso {
+    font-size: 1.25rem;
+  }
+}
+/* ════════════════════════════════════════════════════════════════════
+   📍 UBICACIÓN: Agregar al FINAL de App.css
+   ════════════════════════════════════════════════════════════════════
+   Copiar TODO este bloque y pegarlo después de los estilos existentes
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  SISTEMA DE INVENTARIO - ESTILOS COMPLETOS              ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ========== VISTA PRINCIPAL DE INVENTARIO ========== */
+
+.vista-inventario {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.inventario-header {
+  margin-bottom: 24px;
+}
+
+.inventario-header h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.filtros-inventario {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filtros-inventario button {
+  padding: 10px 20px;
+  background: white;
+  border: 2px solid var(--borde-medio);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.filtros-inventario button:hover {
+  background: var(--bg-gris-claro);
+  transform: translateY(-2px);
+}
+
+.filtros-inventario button.activo {
+  background: var(--rojo-primario);
+  color: white;
+  border-color: var(--rojo-primario);
+}
+
+/* ========== GRID DE INVENTARIO ========== */
+
+.grid-inventario {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* ========== TARJETAS DE INVENTARIO ========== */
+
+.tarjeta-inventario {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--sombra-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 3px solid transparent;
+}
+
+.tarjeta-inventario:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-lg);
+}
+
+/* Estados de stock */
+.tarjeta-inventario.normal {
+  border-color: var(--verde-exito);
+}
+
+.tarjeta-inventario.bajo {
+  border-color: var(--naranja-advertencia);
+  background: #fffbeb;
+}
+
+.tarjeta-inventario.agotado {
+  border-color: #ef4444;
+  background: #fee2e2;
+}
+
+.inventario-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.inventario-info .categoria {
+  margin: 0 0 12px 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.inventario-stock {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.stock-actual {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--rojo-primario);
+}
+
+.tarjeta-inventario.agotado .stock-actual {
+  color: #ef4444;
+}
+
+.tarjeta-inventario.bajo .stock-actual {
+  color: var(--naranja-advertencia);
+}
+
+.stock-unidad {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stock-minimo {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--borde-claro);
+}
+
+/* ========== BADGES DE ESTADO ========== */
+
+.badge-agotado,
+.badge-bajo {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-agotado {
+  background: #ef4444;
+  color: white;
+}
+
+.badge-bajo {
+  background: var(--naranja-advertencia);
+  color: white;
+}
+
+/* ========== MODAL DE INVENTARIO ========== */
+
+.modal-inventario {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-xl);
+  animation: slideUp 0.3s ease;
+}
+
+.modal-inventario-header {
+  background: var(--rojo-primario);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-inventario-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.modal-inventario-contenido {
+  padding: 24px;
+}
+
+.info-ingrediente {
+  background: var(--bg-gris-claro);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.info-ingrediente h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--rojo-primario);
+}
+
+.info-ingrediente p {
+  margin: 6px 0;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.info-ingrediente strong {
+  color: var(--rojo-primario);
+  font-weight: 700;
+}
+
+/* ========== DISPLAY DE STOCK ========== */
+
+.stock-display {
+  background: white;
+  border: 3px solid var(--rojo-primario);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.input-stock {
+  flex: 1;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  border: none;
+  background: transparent;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+}
+
+.input-stock::-webkit-inner-spin-button,
+.input-stock::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.unidad-label {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ========== BOTONES RÁPIDOS ========== */
+
+.botones-rapidos {
+  margin-bottom: 24px;
+}
+
+.botones-rapidos h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #374151;
+}
+
+.grid-botones-stock {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.grid-botones-stock button {
+  padding: 14px 10px;
+  background: var(--rojo-primario);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.grid-botones-stock button:hover {
+  background: var(--rojo-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.grid-botones-stock button.boton-cero {
+  background: #ef4444;
+  grid-column: span 3;
+}
+
+.grid-botones-stock button.boton-cero:hover {
+  background: #dc2626;
+}
+
+/* ========== ACCIONES DEL MODAL ========== */
+
+.acciones-inventario {
+  display: flex;
+  gap: 12px;
+}
+
+.boton-cancelar {
+  flex: 1;
+  padding: 14px;
+  background: var(--gris-medio);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.boton-cancelar:hover {
+  background: var(--gris-hover);
+}
+
+.boton-guardar {
+  flex: 2;
+  padding: 14px;
+  background: var(--verde-exito);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.boton-guardar:hover {
+  background: var(--verde-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+/* ========== PRODUCTOS AGOTADOS ========== */
+
+.producto-agotado {
+  position: relative;
+  background: #fee2e2 !important;
+  border: 3px solid #ef4444 !important;
+}
+
+.overlay-agotado {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(239, 68, 68, 0.95);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulseAgotado 2s infinite;
+}
+
+@keyframes pulseAgotado {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* Productos mini también agotados */
+.producto-mini.producto-agotado {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+  opacity: 0.7;
+}
+
+/* ========== RESPONSIVE INVENTARIO ========== */
+
+@media (max-width: 768px) {
+  .vista-inventario {
+    padding: 16px;
+  }
+
+  .inventario-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .filtros-inventario {
+    flex-wrap: wrap;
+  }
+
+  .filtros-inventario button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .grid-inventario {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .tarjeta-inventario {
+    padding: 16px;
+  }
+
+  .stock-actual {
+    font-size: 2rem;
+  }
+
+  .modal-inventario {
+    width: 95%;
+  }
+
+  .modal-inventario-contenido {
+    padding: 16px;
+  }
+
+  .grid-botones-stock {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-botones-stock button.boton-cero {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventario-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .filtros-inventario button {
+    font-size: 0.875rem;
+    padding: 8px 16px;
+  }
+
+  .grid-inventario {
+    grid-template-columns: 1fr;
+  }
+
+  .tarjeta-inventario {
+    padding: 14px;
+  }
+
+  .inventario-info h3 {
+    font-size: 1.125rem;
+  }
+
+  .stock-actual {
+    font-size: 1.75rem;
+  }
+
+  .badge-agotado,
+  .badge-bajo {
+    font-size: 0.65rem;
+    padding: 4px 8px;
+  }
+
+  .grid-botones-stock {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-botones-stock button.boton-cero {
+    grid-column: span 1;
+  }
+
+  .acciones-inventario {
+    flex-direction: column;
+  }
+
+  .input-stock {
+    font-size: 1.5rem;
+  }
+}
+
+/* ========== ESTADOS HOVER ADICIONALES ========== */
+
+.tarjeta-inventario.normal:hover {
+  border-color: var(--verde-hover);
+}
+
+.tarjeta-inventario.bajo:hover {
+  border-color: var(--naranja-hover);
+}
+
+.tarjeta-inventario.agotado:hover {
+  border-color: #dc2626;
+}
+
+/* ========== ANIMACIÓN DE CARGA ========== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tarjeta-inventario {
+  animation: fadeInUp 0.3s ease;
+}
+
+/* ========== TRANSICIONES SUAVES ========== */
+
+.vista-inventario * {
+  transition: all 0.2s ease;
+}
+
+/* ========== FIN ESTILOS INVENTARIO ========== */

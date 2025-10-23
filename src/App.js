@@ -13,7 +13,14 @@ import {
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { verificarPINSeguro, TIEMPO_SESION_MS } from './pinConfig';
-
+import { 
+  inicializarInventario, 
+  obtenerInventario, 
+  actualizarStock, 
+  descontarInventario,
+  verificarDisponibilidad,
+  obtenerMovimientos
+} from './firebaseInventario';
 // ============================================
 // DATOS DE PRODUCTOS
 // ============================================
@@ -21,50 +28,73 @@ import { verificarPINSeguro, TIEMPO_SESION_MS } from './pinConfig';
 function App() {
 
   const productos = {
-    empanadas: [
-    { id: 'e1', nombre: 'Arroz pollo', precio: 3000, descripcion: 'Empanada con arroz y pollo' },
-    { id: 'e2', nombre: 'Arroz carne', precio: 3000, descripcion: 'Empanada con arroz y carne' },
-    { id: 'e3', nombre: 'Papa carne', precio: 3000, descripcion: 'Empanada con papa y carne' },
-    { id: 'e4', nombre: 'Pizza', precio: 3500, descripcion: 'Empanada con queso, tocineta y maiz' },
-    { id: 'e5', nombre: 'Pollo champiñon', precio: 4000, descripcion: 'Empanada con champiñon y pollo' },
-    { id: 'e6', nombre: 'Papa carne/pollo', precio: 4500, descripcion: 'Papa rellena de carne o pollo desmechado' }
+  empanadas: [
+    { id: 'e1', nombre: 'Arroz pollo', precio: 3000, categoria: 'empanadas', descripcion: 'Empanada con arroz y pollo' },
+    { id: 'e2', nombre: 'Arroz carne', precio: 3000, categoria: 'empanadas', descripcion: 'Empanada con arroz y carne' },
+    { id: 'e3', nombre: 'Papa carne', precio: 3000, categoria: 'empanadas', descripcion: 'Empanada con papa y carne' },
+    { id: 'e4', nombre: 'Pizza', precio: 3500, categoria: 'empanadas', descripcion: 'Empanada con queso, tocineta y maiz' },
+    { id: 'e5', nombre: 'Pollo champiñon', precio: 4000, categoria: 'empanadas', descripcion: 'Empanada con champiñon y pollo' },
+    { id: 'e6', nombre: 'Papa carne/pollo', precio: 4500, categoria: 'empanadas', descripcion: 'Papa rellena de carne o pollo desmechado' }
   ],
   perros: [
-    { id: 'p1', nombre: 'Perro Caliente', precio: 14500, descripcion: 'Salchicha americana, tocineta, queso, papa chip y cebolla caramelizada' },
-    { id: 'p2', nombre: 'Choriperro', precio: 14500, descripcion: 'Chorizo, tocineta, queso, papa chip y cebolla caramelizada' },
-    { id: 'p3', nombre: 'Perro en Combo', precio: 18500, descripcion: 'Perro caliente con porción de papa y gaseosa Postobón' },
-    { id: 'p4', nombre: 'Perro Especial', precio: 20000, descripcion: 'Con carne o pollo desmechado, porción de papa y gaseosa' }
+    { id: 'p1', nombre: 'Perro Caliente', precio: 14500, categoria: 'perros', descripcion: 'Salchicha americana, tocineta, queso, papa chip y cebolla caramelizada' },
+    { id: 'p2', nombre: 'Choriperro', precio: 14500, categoria: 'perros', descripcion: 'Chorizo, tocineta, queso, papa chip y cebolla caramelizada' },
+    { id: 'p3', nombre: 'Perro en Combo', precio: 18500, categoria: 'perros', descripcion: 'Perro caliente con porción de papa y gaseosa Postobón' },
+    { id: 'p4', nombre: 'Perro Especial', precio: 20000, categoria: 'perros', descripcion: 'Con carne o pollo desmechado, porción de papa y gaseosa' }
   ],
   hamburguesas: [
-    { id: 'h1', nombre: 'Sencilla', precio: 12000, descripcion: 'Carne 100g, lechuga, tomate, cebolla caramelizada y queso' },
-    { id: 'h2', nombre: 'Especial', precio: 15000, descripcion: 'Carne 100g, lechuga, tomate, queso, papa chip, tocineta y papas' },
-    { id: 'h3', nombre: 'Super Especial', precio: 20000, descripcion: 'Carne 100g, doble queso, plátano, papa chip, tocineta y papas' },
-    { id: 'h4', nombre: 'Doble Carne', precio: 30000, descripcion: 'Carne y pechuga, doble queso, plátano/maíz, huevo, tocineta y papas' }
+    { id: 'h1', nombre: 'Sencilla', precio: 12000, categoria: 'hamburguesas', descripcion: 'Carne 100g, lechuga, tomate, cebolla caramelizada y queso' },
+    { id: 'h2', nombre: 'Especial', precio: 15000, categoria: 'hamburguesas', descripcion: 'Carne 100g, lechuga, tomate, queso, papa chip, tocineta y papas' },
+    { id: 'h3', nombre: 'Super Especial', precio: 20000, categoria: 'hamburguesas', descripcion: 'Carne 100g, doble queso, plátano, papa chip, tocineta y papas' },
+    { id: 'h4', nombre: 'Doble Carne', precio: 30000, categoria: 'hamburguesas', descripcion: 'Carne y pechuga, doble queso, plátano/maíz, huevo, tocineta y papas' }
   ],
   combos: [
-    { id: 'c1', nombre: 'Combo Perros', precio: 24000, descripcion: 'Dos perros calientes con gaseosa Postobón personal' },
-    { id: 'c2', nombre: 'Combo Hamburguesas', precio: 28000, descripcion: 'Dos hamburguesas con porción de papas' }
+    { id: 'c1', nombre: 'Combo Perros', precio: 24000, categoria: 'combos', descripcion: 'Dos perros calientes con gaseosa Postobón personal' },
+    { id: 'c2', nombre: 'Combo Hamburguesas', precio: 28000, categoria: 'combos', descripcion: 'Dos hamburguesas con porción de papas' }
   ],
   salchipapas: [
-    { id: 's1', nombre: 'Salchipapa', precio: 25000, descripcion: 'Papa, plátano, tocineta, proteína, salchicha, lechuga y queso' },
-    { id: 's2', nombre: 'Mazorcada', precio: 25000, descripcion: 'Maíz tierno, proteína, tocineta, papa, papa chip, queso y plátano' }
+    // PRODUCTOS CON PRECIO VARIABLE (desde $25.000)
+    { 
+      id: 's1', 
+      nombre: 'Salchipapa', 
+      precio: 0, 
+      categoria: 'salchipapas', 
+      descripcion: 'Papa, plátano, tocineta, proteína, salchicha, lechuga y queso',
+      precioVariable: true, 
+      precioMinimo: 25000 
+    },
+    { 
+      id: 's2', 
+      nombre: 'Mazorcada', 
+      precio: 0, 
+      categoria: 'salchipapas', 
+      descripcion: 'Maíz tierno, proteína, tocineta, papa, papa chip, queso y plátano',
+      precioVariable: true, 
+      precioMinimo: 25000 
+    }
   ],
   platos: [
-    { id: 'pl1', nombre: 'Chorizo con Arepa', precio: 7500, descripcion: 'Carne con porción de papas y ensalada' },
-    { id: 'pl2', nombre: 'Pechuga a la Plancha', precio: 23000, descripcion: 'Pechuga con porción de papas y ensalada' },
-    { id: 'pl3', nombre: 'Carne a la Plancha', precio: 23000, descripcion: 'Chorizo con arepa' },
+    { id: 'pl1', nombre: 'Chorizo con Arepa', precio: 7500, categoria: 'platos', descripcion: 'Chorizo con arepa' },
+    { id: 'pl2', nombre: 'Pechuga a la Plancha', precio: 23000, categoria: 'platos', descripcion: 'Pechuga con porción de papas y ensalada' },
+    { id: 'pl3', nombre: 'Carne a la Plancha', precio: 23000, categoria: 'platos', descripcion: 'Carne con porción de papas y ensalada' }
   ],
   bebidas: [
-    { id: 'b1', nombre: 'Gaseosa Postobón', precio: 3000, descripcion: '' },
-    { id: 'b2', nombre: 'Coca Cola 250ml', precio: 3500, descripcion: '' },
-    { id: 'b3', nombre: 'Coca Cola 350ml', precio: 3000, descripcion: '' },
-    { id: 'b4', nombre: 'Postobón 1.5L', precio: 6000, descripcion: '' },
-    { id: 'b5', nombre: 'Coca Cola 1.5L', precio: 7500, descripcion: '' },
-    { id: 'b6', nombre: 'Cerveza Andina', precio: 3000, descripcion: '' },
-    { id: 'b7', nombre: 'Cerveza', precio: 3500, descripcion: '' },
-    { id: 'b8', nombre: 'Jugos Hit', precio: 3000, descripcion: '' },
-    { id: 'b9', nombre: 'Mr. Tea', precio: 3000, descripcion: '' }
-  ]
+    { id: 'b1', nombre: 'Gaseosa Postobón', precio: 3000, categoria: 'bebidas', descripcion: '' },
+    { id: 'b2', nombre: 'Coca Cola 250ml', precio: 3500, categoria: 'bebidas', descripcion: '' },
+    { id: 'b3', nombre: 'Coca Cola 350ml', precio: 3000, categoria: 'bebidas', descripcion: '' },
+    { id: 'b4', nombre: 'Postobón 1.5L', precio: 6000, categoria: 'bebidas', descripcion: '' },
+    { id: 'b5', nombre: 'Coca Cola 1.5L', precio: 7500, categoria: 'bebidas', descripcion: '' },
+    { id: 'b6', nombre: 'Cerveza Andina', precio: 3000, categoria: 'bebidas', descripcion: '' },
+    { id: 'b7', nombre: 'Cerveza', precio: 3500, categoria: 'bebidas', descripcion: '' },
+    { id: 'b8', nombre: 'Jugos Hit', precio: 3000, categoria: 'bebidas', descripcion: '' },
+    { id: 'b9', nombre: 'Mr. Tea', precio: 3000, categoria: 'bebidas', descripcion: '' }
+  ],
+  otros: [
+    { id: 'o1', nombre: 'Cigarrillos', precio: 1300, categoria: 'otros', descripcion: '' },
+    { id: 'o2', nombre: 'Tinto', precio: 1500, categoria: 'otros', descripcion: '' },
+    { id: 'o3', nombre: 'Aromatica', precio: 1500, categoria: 'otros', descripcion: '' },
+    { id: 'o4', nombre: 'Cafe', precio: 3000, categoria: 'otros', descripcion: '' }
+  ],
 };
   // Todas las categorías disponibles
   const categorias = [
@@ -74,7 +104,8 @@ function App() {
     { id: 'combos', nombre: 'Combos', icono: '🎁' },
     { id: 'salchipapas', nombre: 'Salchipapas', icono: '🍟' },
     { id: 'platos', nombre: 'Platos', icono: '🍽️' },
-    { id: 'bebidas', nombre: 'Bebidas', icono: '🥤' }
+    { id: 'bebidas', nombre: 'Bebidas', icono: '🥤' },
+    { id: 'otros', nombre: 'Otros', icono: '🧺' }
   ];
 
   // ============================================
@@ -115,6 +146,17 @@ function App() {
   const [tiempoExpiracion, setTiempoExpiracion] = useState(null);
   const [vistaRequerida, setVistaRequerida] = useState('');
 
+  //Estados precio temporal
+  const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+  const [productoTemporal, setProductoTemporal] = useState(null);
+  const [precioPersonalizado, setPrecioPersonalizado] = useState('');
+  // Estados para inventario
+  const [inventario, setInventario] = useState({});
+  const [movimientosInventario, setMovimientosInventario] = useState([]);
+  const [mostrarModalInventario, setMostrarModalInventario] = useState(false);
+  const [ingredienteSeleccionado, setIngredienteSeleccionado] = useState(null);
+  const [nuevaCantidadStock, setNuevaCantidadStock] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('todos');
   // ============================================
  //useEffect Y FUNCIONES DE FIREBASE
 // ============================================
@@ -150,23 +192,57 @@ function App() {
     return () => clearInterval(verificarExpiracion);
   }, [autenticado, tiempoExpiracion]);
 
+  useEffect(() => {
+  cargarInventario();
+  }, []);
+
+const cargarInventario = async () => {
+  const inv = await obtenerInventario();
+  setInventario(inv);
+};
+
   // ============================================
   // FUNCIONES DE MANEJO DE PEDIDOS
   // ============================================
 
   const agregarAlPedido = (producto) => {
-    const existente = pedido.find(item => item.id === producto.id);
+  // Si el producto tiene precio variable, abrir modal
+  if (producto.precioVariable) {
+    setProductoTemporal(producto);
+    setPrecioPersonalizado('');
+    setMostrarModalPrecio(true);
+    return;
+  }
+
+  // ⭐ NUEVO: Verificar disponibilidad en inventario
+  const disponible = verificarDisponibilidad(producto.id, 1, inventario);
+  if (!disponible) {
+    alert(`⚠️ No hay suficiente stock de ingredientes para: ${producto.nombre}`);
+    return;
+  }
+
+  // Comportamiento normal para productos con precio fijo
+  const productoExistente = pedido.find(item => item.id === producto.id);
+  
+  if (productoExistente) {
+    // ⭐ NUEVO: Verificar si hay stock para una unidad más
+    const cantidadTotal = productoExistente.cantidad + 1;
+    const disponibleCantidad = verificarDisponibilidad(producto.id, cantidadTotal, inventario);
     
-    if (existente) {
-      setPedido(pedido.map(item =>
-        item.id === producto.id
-          ? { ...item, cantidad: item.cantidad + 1 }
-          : item
-      ));
-    } else {
-      setPedido([...pedido, { ...producto, cantidad: 1 }]);
+    if (!disponibleCantidad) {
+      alert(`⚠️ No hay suficiente stock para agregar más unidades de: ${producto.nombre}`);
+      return;
     }
-  };
+    
+    setPedido(pedido.map(item =>
+      item.id === producto.id
+        ? { ...item, cantidad: item.cantidad + 1 }
+        : item
+    ));
+  } else {
+    setPedido([...pedido, { ...producto, cantidad: 1 }]);
+  }
+};
 
   const quitarDelPedido = (productoId) => {
     const producto = pedido.find(item => item.id === productoId);
@@ -195,7 +271,58 @@ function App() {
     setMetodoPago('');
     setMontoRecibido('');
   };
+// ========================================
+// Funciones para precio personalizado
+// ========================================
 
+  const cerrarModalPrecio = () => {
+    setMostrarModalPrecio(false);
+    setProductoTemporal(null);
+    setPrecioPersonalizado('');
+  };
+
+  const agregarMontoPersonalizado = (monto) => {
+    const montoActual = parseInt(precioPersonalizado || '0');
+    const nuevoMonto = montoActual + monto;
+      setPrecioPersonalizado(nuevoMonto.toString());
+  };
+
+  const confirmarPrecioPersonalizado = () => {
+  const precio = parseInt(precioPersonalizado);
+  
+  if (!precio || precio < productoTemporal.precioMinimo) {
+    alert(`El precio mínimo es $${productoTemporal.precioMinimo.toLocaleString()}`);
+    return;
+  }
+
+  // Crear producto con precio personalizado
+  // Usar un ID único que incluye el precio para poder tener múltiples del mismo producto con diferentes precios
+  const idUnico = `${productoTemporal.id}-${precio}`;
+  
+  const productoConPrecio = {
+    ...productoTemporal,
+    id: idUnico,
+    precio: precio,
+    idOriginal: productoTemporal.id, // Guardar el ID original
+    // Agregar el precio al nombre para diferenciarlo
+    nombre: `${productoTemporal.nombre} ($${precio.toLocaleString()})`
+  };
+
+  // Agregar al pedido
+  const productoExistente = pedido.find(item => item.id === idUnico);
+  
+    if (productoExistente) {
+      setPedido(pedido.map(item =>
+        item.id === idUnico
+          ? { ...item, cantidad: item.cantidad + 1 }
+          : item
+      ));
+    } else {
+      setPedido([...pedido, { ...productoConPrecio, cantidad: 1 }]);
+   }
+
+    cerrarModalPrecio();
+  };
   // ============================================
   // FUNCIONES DE ÓRDENES PENDIENTES
   // ============================================
@@ -455,7 +582,12 @@ function App() {
       };
 
       await guardarVentaFirebase(venta);
-
+      const productosParaDescontar = pagoDesdeOrdenPendiente 
+      ? ordenSeleccionada.productos 
+      : pedido;
+  
+  await descontarInventario(productosParaDescontar);
+  await cargarInventario();
       if (pagoDesdeOrdenPendiente && ordenSeleccionada) {
         const ordenRef = doc(db, 'ordenes-pendientes', ordenSeleccionada.firebaseId);
         await updateDoc(ordenRef, {
@@ -622,7 +754,67 @@ function App() {
     if (minutos < 60) return '#f59e0b'; // amarillo
     return '#dc2626'; // rojo
   };
+// ══════ FUNCIONES DE GESTIÓN DE INVENTARIO ══════
 
+  const abrirModalInventario = (ingrediente) => {
+    setIngredienteSeleccionado(ingrediente);
+    setNuevaCantidadStock(ingrediente.stock.toString());
+    setMostrarModalInventario(true);
+  };
+
+  const cerrarModalInventario = () => {
+    setMostrarModalInventario(false);
+    setIngredienteSeleccionado(null);
+    setNuevaCantidadStock('');
+  };
+
+  const confirmarActualizacionStock = async () => {
+    const cantidad = parseInt(nuevaCantidadStock);
+  
+    if (isNaN(cantidad) || cantidad < 0) {
+      alert('Cantidad inválida');
+      return;
+    }
+  
+    const exito = await actualizarStock(
+      ingredienteSeleccionado.id,
+      cantidad,
+      'Ajuste manual desde interfaz'
+    );
+  
+    if (exito) {
+      await cargarInventario();
+      cerrarModalInventario();
+    } else {
+      alert('Error al actualizar stock');
+    }
+  };
+
+  const agregarCantidadRapida = (monto) => {
+    const cantidadActual = parseInt(nuevaCantidadStock || '0');
+    setNuevaCantidadStock((cantidadActual + monto).toString());
+  };
+
+  const cargarMovimientos = async () => {
+    const movs = await obtenerMovimientos(50);
+    setMovimientosInventario(movs);
+  };
+
+  const obtenerIngredientesFiltrados = () => {
+    const items = Object.values(inventario);
+  
+    if (filtroCategoria === 'todos') {
+      return items;
+    }
+  
+    return items.filter(item => item.categoria === filtroCategoria);
+  };
+
+  const obtenerEstadoStock = (item) => {
+    if (item.stock === 0) return 'agotado';
+    if (item.stock <= item.stockMinimo) return 'bajo';
+    return 'normal';
+  };
   // ============================================
 // SISTEMA DE PIN Y COMPONENTE MODAL
 // ============================================
@@ -764,7 +956,7 @@ function App() {
   };
 
   // ============================================
-// RENDER JSX COMPLETO
+// RENDER JSX 
 // ============================================
 
   return (
@@ -803,6 +995,14 @@ function App() {
             Reportes
           </button>
 
+          <button
+            className={`boton-nav ${vistaActual === 'inventario' ? 'activo' : ''}`}
+            onClick={() => manejarClickVistaProtegida('inventario')}
+          >
+            📦 Inventario
+          </button>
+
+
           {autenticado && (
             <button
               className="boton-cerrar-sesion"
@@ -833,19 +1033,31 @@ function App() {
 
             {/* Grid de productos */}
             <div className="grid-productos">
-              {productos[categoriaActual].map(producto => (
-                <div
-                  key={producto.id}
-                  className="tarjeta-producto"
-                  onClick={() => agregarAlPedido(producto)}
-                >
-                  <h3>{producto.nombre}</h3>
-                  <p className="precio">${producto.precio.toLocaleString()}</p>
-                  
-                </div>
-              ))}
-            </div>
-          </div>
+              {productos[categoriaActual].map(producto => {
+                const disponible = verificarDisponibilidad(producto.id, 1, inventario);
+    
+               return (
+              <div
+                key={producto.id}
+                className={`tarjeta-producto ${!disponible ? 'producto-agotado' : ''}`}
+                onClick={() => disponible && agregarAlPedido(producto)}
+                style={{ 
+                  cursor: disponible ? 'pointer' : 'not-allowed',
+                  opacity: disponible ? 1 : 0.7
+                }}
+              >
+                <h3>{producto.nombre}</h3>
+                <p className="precio">${producto.precio.toLocaleString()}</p>
+                {!disponible && (
+                  <div className="overlay-agotado">
+                    <span>❌ AGOTADO</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
           {/* Panel de pedido */}
           <div className="panel-pedido">
@@ -1104,6 +1316,80 @@ function App() {
         </div>
       )}
 
+      {vistaActual === 'inventario' && (
+        <div className="vista-inventario">
+          <div className="inventario-header">
+            <h2>📦 Gestión de Inventario</h2>
+              <div className="filtros-inventario">
+                <button
+                  className={filtroCategoria === 'todos' ? 'activo' : ''}
+                  onClick={() => setFiltroCategoria('todos')}
+                >
+                  Todos
+                </button>
+                <button
+                  className={filtroCategoria === 'bebidas' ? 'activo' : ''}
+                  onClick={() => setFiltroCategoria('bebidas')}
+                >
+                  🥤 Bebidas
+                </button>
+                <button
+                  className={filtroCategoria === 'proteinas' ? 'activo' : ''}
+                  onClick={() => setFiltroCategoria('proteinas')}
+                >
+                  🍖 Proteínas
+                </button>
+                <button
+                  className={filtroCategoria === 'embutidos' ? 'activo' : ''}
+                  onClick={() => setFiltroCategoria('embutidos')}
+                >
+                  🌭 Embutidos
+                </button>
+                <button
+                  className={filtroCategoria === 'otros' ? 'activo' : ''}
+                  onClick={() => setFiltroCategoria('otros')}
+                >
+                  🧺 Otros
+                </button>
+              </div>
+            </div>
+
+            <div className="grid-inventario">
+              {obtenerIngredientesFiltrados().map(item => {
+              const estado = obtenerEstadoStock(item);
+              return (
+                <div
+                  key={item.id}
+                  className={`tarjeta-inventario ${estado}`}
+                  onClick={() => abrirModalInventario(item)}
+                >
+                  <div className="inventario-info">
+                    <h3>{item.nombre}</h3>
+                    <p className="categoria">{
+                      item.categoria === 'bebidas' ? '🥤 Bebidas':
+                      item.categoria === 'proteinas' ? '🍖 Proteínas' :
+                      '🌭 Embutidos'
+                     }</p>
+                  </div>
+                  <div className="inventario-stock">
+                    <span className="stock-actual">{item.stock}</span>
+                    <span className="stock-unidad">{item.unidad}</span>
+                  </div>
+                  {estado === 'agotado' && (
+                    <div className="badge-agotado">AGOTADO</div>
+                  )}
+                  {estado === 'bajo' && (
+                    <div className="badge-bajo">STOCK BAJO</div>
+                  )}
+                    <div className="stock-minimo">
+                      Mínimo: {item.stockMinimo} {item.unidad}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       {/* MODAL DE PAGO */}
       {mostrarPago && (
         <div className="modal-overlay" onClick={cerrarPago}>
@@ -1256,17 +1542,28 @@ function App() {
                   </div>
 
                   <div className="grid-productos-mini">
-                    {productos[categoriaActual].map(producto => (
-                      <div
-                        key={producto.id}
-                        className="producto-mini"
-                        onClick={() => agregarProductoNuevo(producto)}
-                      >
-                        <span>{producto.nombre}</span>
-                        <span>${producto.precio.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
+                    {productos[categoriaActual].map(producto => {
+                      const disponible = verificarDisponibilidad(producto.id, 1, inventario);
+    
+                      return (
+                        <div
+                          key={producto.id}
+                          className={`producto-mini ${!disponible ? 'producto-agotado' : ''}`}
+                          onClick={() => disponible && agregarProductoNuevo(producto)}
+                          style={{ 
+                            cursor: disponible ? 'pointer' : 'not-allowed',
+                            opacity: disponible ? 1 : 0.7
+                          }}
+                        >
+                          <span>{producto.nombre}</span>
+                          <span>${producto.precio.toLocaleString()}</span>
+                          {!disponible && (
+                            <span style={{ color: '#ef4444', fontWeight: 'bold' }}>❌</span>
+                          )}
+                    </div>
+                  );
+                })}
+              </div>
 
                   {productosNuevos.length > 0 && (
                     <div className="productos-nuevos-lista">
@@ -1360,6 +1657,131 @@ function App() {
 
       {/* MODAL DE PIN */}
       {mostrarModalPIN && <ModalPIN />}
+
+      {/* Modal de Precio Personalizado */}
+      {mostrarModalPrecio && productoTemporal && (
+        <div className="modal-overlay" onClick={cerrarModalPrecio}>
+          <div className="modal-precio" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-precio-header">
+              <h2>💰 Precio Personalizado</h2>
+                <button className="boton-cerrar" onClick={cerrarModalPrecio}>×</button>
+            </div>
+
+            <div className="modal-precio-contenido">
+              <div className="producto-info-precio">
+                <h3>{productoTemporal.nombre}</h3>
+                  <p className="descripcion-producto">{productoTemporal.descripcion}</p>
+                    <p className="precio-minimo">
+                      Precio desde: <strong>${productoTemporal.precioMinimo.toLocaleString()}</strong>
+                    </p>
+              </div>
+
+            <div className="precio-display">
+              <span className="simbolo-peso">$</span>
+                <input
+                  type="text"
+                  value={precioPersonalizado ? parseInt(precioPersonalizado).toLocaleString() : '0'}
+                  readOnly
+                  className="input-precio-personalizado"
+                />
+            </div>
+
+            <div className="selector-billetes">
+              <h3>Agregar monto:</h3>
+                <div className="grid-billetes">
+                  <button onClick={() => agregarMontoPersonalizado(1000)}>
+                    + $1.000
+                  </button>
+                  <button onClick={() => agregarMontoPersonalizado(5000)}>
+                    + $5.000
+                  </button>
+                  <button onClick={() => agregarMontoPersonalizado(10000)}>
+                    + $10.000
+                  </button>
+                  <button onClick={() => agregarMontoPersonalizado(25000)}>
+                    + $25.000
+                  </button>
+                  <button onClick={() => agregarMontoPersonalizado(30000)}>
+                    + $30.000
+                  </button>
+                  <button onClick={() => agregarMontoPersonalizado(50000)}>
+                   + $50.000
+                  </button>
+                </div>
+            </div>
+
+            <div className="acciones-precio">
+              <button 
+                className="boton-limpiar-precio"
+                onClick={() => setPrecioPersonalizado('')}
+              >
+               🔄 Limpiar
+              </button>
+              <button 
+                className="boton-confirmar-precio"
+                onClick={confirmarPrecioPersonalizado}
+                disabled={!precioPersonalizado || parseInt(precioPersonalizado) < productoTemporal.precioMinimo}
+              >
+                ✓ Agregar al Pedido
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
+
+      {mostrarModalInventario && ingredienteSeleccionado && (
+        <div className="modal-overlay" onClick={cerrarModalInventario}>
+          <div className="modal-inventario" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-inventario-header">
+              <h2>📦 Actualizar Stock</h2>
+              <button className="boton-cerrar" onClick={cerrarModalInventario}>×</button>
+            </div>
+
+          <div className="modal-inventario-contenido">
+            <div className="info-ingrediente">
+              <h3>{ingredienteSeleccionado.nombre}</h3>
+              <p>Stock actual: <strong>{ingredienteSeleccionado.stock} {ingredienteSeleccionado.unidad}</strong></p>
+              <p>Stock mínimo: <strong>{ingredienteSeleccionado.stockMinimo} {ingredienteSeleccionado.unidad}</strong></p>
+            </div>
+
+          <div className="stock-display">
+            <input
+              type="number"
+              value={nuevaCantidadStock}
+              onChange={(e) => setNuevaCantidadStock(e.target.value)}
+              className="input-stock"
+              min="0"
+            />
+            <span className="unidad-label">{ingredienteSeleccionado.unidad}</span>
+          </div>
+
+          <div className="botones-rapidos">
+            <h4>Agregar rápido:</h4>
+            <div className="grid-botones-stock">
+              <button onClick={() => agregarCantidadRapida(5)}>+5</button>
+              <button onClick={() => agregarCantidadRapida(10)}>+10</button>
+              <button onClick={() => agregarCantidadRapida(20)}>+20</button>
+              <button onClick={() => agregarCantidadRapida(50)}>+50</button>
+              <button onClick={() => agregarCantidadRapida(100)}>+100</button>
+              <button onClick={() => setNuevaCantidadStock('0')} className="boton-cero">
+                Vaciar
+              </button>
+            </div>
+          </div>
+
+          <div className="acciones-inventario">
+            <button className="boton-cancelar" onClick={cerrarModalInventario}>
+              Cancelar
+            </button>
+            <button className="boton-guardar" onClick={confirmarActualizacionStock}>
+              ✓ Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    )}
     </div>
   );
 }
