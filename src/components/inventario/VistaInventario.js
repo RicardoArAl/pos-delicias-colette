@@ -1,13 +1,17 @@
 // src/components/inventario/VistaInventario.js
-import React from 'react';
+import React, { useState } from 'react';
 import { obtenerEstadoStock } from '../../utils/helpers';
+import { forzarActualizacionInventario } from '../../firebaseInventario';
 
 const VistaInventario = ({
   filtroCategoria,
   setFiltroCategoria,
   inventario,
-  abrirModalInventario
+  abrirModalInventario,
+  cargarInventario // Necesitamos esta función de App.js para recargar después de sincronizar
 }) => {
+  const [sincronizando, setSincronizando] = useState(false);
+
   const obtenerIngredientesFiltrados = () => {
     const items = Object.values(inventario);
   
@@ -18,10 +22,45 @@ const VistaInventario = ({
     return items.filter(item => item.categoria === filtroCategoria);
   };
 
+  const sincronizarInventario = async () => {
+    if (!window.confirm('¿Deseas sincronizar el inventario con los productos del código?\n\nEsto agregará nuevos productos pero mantendrá los stocks actuales.')) {
+      return;
+    }
+
+    setSincronizando(true);
+    
+    try {
+      const exito = await forzarActualizacionInventario();
+      
+      if (exito) {
+        await cargarInventario(); // Recargar inventario desde Firebase
+        alert('✅ Inventario sincronizado exitosamente');
+      } else {
+        alert('❌ Error al sincronizar inventario');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al sincronizar inventario');
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
   return (
     <div className="vista-inventario">
       <div className="inventario-header">
-        <h2>📦 Gestión de Inventario</h2>
+        <div className="inventario-header-top">
+          <h2>📦 Gestión de Inventario</h2>
+          <button 
+            className="btn-sincronizar"
+            onClick={sincronizarInventario}
+            disabled={sincronizando}
+            title="Sincronizar con productos del código"
+          >
+            {sincronizando ? '⏳ Sincronizando...' : '🔄 Sincronizar Inventario'}
+          </button>
+        </div>
+        
         <div className="filtros-inventario">
           <button
             className={filtroCategoria === 'todos' ? 'activo' : ''}

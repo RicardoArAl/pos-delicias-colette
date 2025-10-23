@@ -1,5 +1,6 @@
 // src/components/pedidos/PanelPedido.js
-import React from 'react';
+import React, { useState } from 'react';
+import { clientesFrecuentes } from '../../data/clientesFrecuentes';
 
 const PanelPedido = ({ 
   pedido, 
@@ -10,6 +11,19 @@ const PanelPedido = ({
   guardarComoPendiente,
   abrirPago 
 }) => {
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('sin-cliente');
+  const [mostrarSelectorCliente, setMostrarSelectorCliente] = useState(false);
+
+  const manejarGuardarPendiente = () => {
+    guardarComoPendiente(clienteSeleccionado);
+    setClienteSeleccionado('sin-cliente');
+    setMostrarSelectorCliente(false);
+  };
+
+  const toggleSelectorCliente = () => {
+    setMostrarSelectorCliente(!mostrarSelectorCliente);
+  };
+
   return (
     <div className="panel-pedido">
       <h2>🛒 Pedido Actual</h2>
@@ -47,12 +61,48 @@ const PanelPedido = ({
           </div>
 
           <div className="acciones-pedido">
-            <button 
-              className="boton-pendiente"
-              onClick={guardarComoPendiente}
-            >
-              ⏳ Guardar como Pendiente
-            </button>
+            <div className="contenedor-pendiente">
+              <button 
+                className="boton-pendiente"
+                onClick={toggleSelectorCliente}
+              >
+                ⏳ Guardar como Pendiente
+              </button>
+
+              {mostrarSelectorCliente && (
+                <div className="selector-cliente-dropdown">
+                  <label>Cliente (opcional):</label>
+                  <select 
+                    value={clienteSeleccionado}
+                    onChange={(e) => setClienteSeleccionado(e.target.value)}
+                  >
+                    {clientesFrecuentes.map(cliente => (
+                      <option key={cliente.id} value={cliente.id}>
+                        {cliente.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="botones-selector">
+                    <button 
+                      className="btn-confirmar-cliente"
+                      onClick={manejarGuardarPendiente}
+                    >
+                      ✓ Guardar
+                    </button>
+                    <button 
+                      className="btn-cancelar-cliente"
+                      onClick={() => {
+                        setMostrarSelectorCliente(false);
+                        setClienteSeleccionado('sin-cliente');
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button 
               className="boton-pagar"
               onClick={abrirPago}

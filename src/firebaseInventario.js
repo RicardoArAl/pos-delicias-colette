@@ -168,6 +168,23 @@ export const inventarioInicial = {
     unidad: 'unidades',
     stock: 100,
     stockMinimo: 10
+  },
+  // OTROS
+  'arepa': {
+    id: 'arepa',
+    nombre: 'Arepa',
+    categoria: 'otros',
+    unidad: 'unidades',
+    stock: 80,
+    stockMinimo: 25
+  },
+  'cigarrillos': {
+    id: 'cigarrillos',
+    nombre: 'Cigarrillo',
+    categoria: 'otros',
+    unidad: 'unidades',
+    stock: 80,
+    stockMinimo: 25
   }
 };
 
@@ -247,8 +264,11 @@ export const recetasProductos = {
   ],
   'pl3': [ // Carne a la Plancha
     { ingrediente: 'carne-res', cantidad: 1 }
+  ],
+  // OTROS
+  'o1': [ // Cigarrillo
+    { ingrediente: 'cigarrillos', cantidad: 1 }
   ]
-  
   // NOTA: Empanadas, Salchipapas y Mazorcadas NO consumen inventario
   // porque tienen precios variables o ingredientes muy variados
 };
@@ -406,7 +426,6 @@ const registrarMovimiento = async (ingredienteId, cantidadAnterior, cantidadNuev
     console.error('❌ Error al registrar movimiento:', error);
   }
 };
-
 // Obtener movimientos recientes
 export const obtenerMovimientos = async (limite = 50) => {
   try {
@@ -421,5 +440,45 @@ export const obtenerMovimientos = async (limite = 50) => {
   } catch (error) {
     console.error('❌ Error al obtener movimientos:', error);
     return [];
+  }
+};
+// Forzar actualización del inventario con nuevos productos
+export const forzarActualizacionInventario = async () => {
+  try {
+    const inventarioRef = doc(db, 'configuracion', 'inventario');
+    const docSnap = await getDoc(inventarioRef);
+    
+    if (docSnap.exists()) {
+      const itemsActuales = docSnap.data().items;
+      
+      // Merge: mantiene stocks actuales y agrega nuevos productos
+      const itemsActualizados = { ...inventarioInicial };
+      
+      // Preservar stocks existentes
+      Object.keys(itemsActuales).forEach(id => {
+        if (itemsActualizados[id]) {
+          itemsActualizados[id].stock = itemsActuales[id].stock;
+        }
+      });
+      
+      await updateDoc(inventarioRef, {
+        items: itemsActualizados,
+        ultimaActualizacion: Timestamp.now()
+      });
+      
+      console.log('✅ Inventario sincronizado con nuevos productos');
+      return true;
+    } else {
+      // Si no existe, inicializar
+      await setDoc(inventarioRef, {
+        items: inventarioInicial,
+        ultimaActualizacion: Timestamp.now()
+      });
+      console.log('✅ Inventario inicializado');
+      return true;
+    }
+  } catch (error) {
+    console.error('❌ Error al actualizar inventario:', error);
+    return false;
   }
 };

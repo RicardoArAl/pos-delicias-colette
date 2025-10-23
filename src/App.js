@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
@@ -244,7 +243,7 @@ function App() {
   // ============================================
   // FUNCIONES DE ÓRDENES PENDIENTES
   // ============================================
-  const guardarComoPendiente = async () => {
+  const guardarComoPendiente = async (clienteId = 'sin-cliente') => {
     if (pedido.length === 0) {
       alert('El pedido está vacío');
       return;
@@ -257,6 +256,7 @@ function App() {
       const nuevaOrden = {
         numeroOrden: proximoNumero,
         estado: 'pendiente',
+        clienteId: clienteId,
         fecha: ahora.toISOString().split('T')[0],
         hora: ahora.toTimeString().split(' ')[0],
         fechaCreacion: Timestamp.now(),
@@ -719,6 +719,7 @@ function App() {
           setFiltroCategoria={setFiltroCategoria}
           inventario={inventario}
           abrirModalInventario={abrirModalInventario}
+          cargarInventario={cargarInventario}
         />
       )}
 

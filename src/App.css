@@ -2712,5 +2712,400 @@ input:focus {
 .vista-inventario * {
   transition: all 0.2s ease;
 }
+/* ESTILOS PARA VISTA INVENTARIO - Agregar a App.css */
 
+/* Header del inventario con botón */
+.inventario-header {
+  margin-bottom: 30px;
+}
+
+.inventario-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.inventario-header-top h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #1f2937;
+}
+
+/* Botón de Sincronizar */
+.btn-sincronizar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.btn-sincronizar:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-sincronizar:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-sincronizar:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+/* Animación del icono cuando está sincronizando */
+.btn-sincronizar:disabled {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Filtros de inventario */
+.filtros-inventario {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filtros-inventario button {
+  padding: 10px 20px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+}
+
+.filtros-inventario button:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  transform: translateY(-1px);
+}
+
+.filtros-inventario button.activo {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .inventario-header-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-sincronizar {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.95rem;
+    padding: 14px 20px;
+  }
+
+  .inventario-header-top h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filtros-inventario {
+    justify-content: center;
+  }
+
+  .filtros-inventario button {
+    flex: 1 1 auto;
+    min-width: 100px;
+    font-size: 0.9rem;
+  }
+}
+/* ===============================================
+   CSS PARA SISTEMA DE ETIQUETAS DE CLIENTE
+   Agregar a App.css
+   =============================================== */
+
+/* Selector de cliente en panel de pedido */
+.contenedor-pendiente {
+  position: relative;
+  flex: 1;
+}
+
+.selector-cliente-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selector-cliente-dropdown label {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.selector-cliente-dropdown select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.selector-cliente-dropdown select:hover {
+  border-color: #d1d5db;
+}
+
+.selector-cliente-dropdown select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.botones-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-confirmar-cliente,
+.btn-cancelar-cliente {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-confirmar-cliente {
+  background: #10b981;
+  color: white;
+}
+
+.btn-confirmar-cliente:hover {
+  background: #059669;
+}
+
+.btn-cancelar-cliente {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-cancelar-cliente:hover {
+  background: #dc2626;
+}
+
+/* Badge de cliente en tarjeta de orden */
+.orden-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-cliente {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Filtro de clientes en vista pendientes */
+.header-pendientes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.filtro-clientes-mini {
+  flex-shrink: 0;
+}
+
+.select-filtro-cliente {
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.select-filtro-cliente:hover {
+  border-color: #d1d5db;
+}
+
+.select-filtro-cliente:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Resumen por cliente */
+.resumen-clientes {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.resumen-clientes h3 {
+  margin: 0 0 15px 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.grid-resumen-clientes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.tarjeta-resumen-cliente {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.tarjeta-resumen-cliente:hover {
+  border-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.icono-cliente-resumen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.info-cliente-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nombre-cliente-resumen {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.datos-cliente-resumen {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-pendientes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-clientes-mini {
+    width: 100%;
+  }
+
+  .select-filtro-cliente {
+    width: 100%;
+  }
+
+  .grid-resumen-clientes {
+    grid-template-columns: 1fr;
+  }
+
+  .selector-cliente-dropdown {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
 /* ========== FIN ESTILOS INVENTARIO ========== */
