@@ -1,6 +1,7 @@
 // src/components/Header.js
 import React from 'react';
 import styles from './Header.module.css';
+import logo from '../assets/logo.png';
 
 const Header = ({ 
   vistaActual, 
@@ -12,7 +13,10 @@ const Header = ({
 }) => {
   return (
     <header className={styles.header}>
-      <h1>🍔 Delicias de Colette - POS</h1>
+      <div className={styles.headerTitle}>
+        <img src={logo} alt="Delicias de Colette" className={styles.logo} />
+        <h1>Delicias de Colette - POS</h1>
+      </div>
       <div className={styles.headerButtons}>
         <button
           className={vistaActual === 'pedidos' ? styles.activo : ''}

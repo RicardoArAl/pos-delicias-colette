@@ -185,6 +185,14 @@ export const inventarioInicial = {
     unidad: 'unidades',
     stock: 80,
     stockMinimo: 25
+  },
+  'delipastas': {
+    id: 'delipastas',
+    nombre: 'Deli-pastas',
+    categoria: 'otros',
+    unidad: 'unidades',
+    stock: 80,
+    stockMinimo: 25
   }
 };
 
@@ -268,6 +276,21 @@ export const recetasProductos = {
   // OTROS
   'o1': [ // Cigarrillo
     { ingrediente: 'cigarrillos', cantidad: 1 }
+  ],
+  'e1': [ // Empanada
+    { ingrediente: 'delipastas', cantidad: 1 }
+  ],
+  'e2': [ 
+    { ingrediente: 'delipastas', cantidad: 1 }
+  ],
+  'e3': [ 
+    { ingrediente: 'delipastas', cantidad: 1 }
+  ],
+  'e4': [ 
+    { ingrediente: 'delipastas', cantidad: 1 }
+  ],
+  'e5': [ 
+    { ingrediente: 'delipastas', cantidad: 1 }
   ]
   // NOTA: Empanadas, Salchipapas y Mazorcadas NO consumen inventario
   // porque tienen precios variables o ingredientes muy variados
